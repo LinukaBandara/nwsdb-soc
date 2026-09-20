@@ -13,10 +13,10 @@ public class UsageServiceUnitTests
             .Options);
 
     [Theory]
-    [InlineData(0, 0)]        // no consumption -> no bill
-    [InlineData(5, 75)]       // 5 units entirely in tier 1 (Rs.15/unit): 5 * 15 = 75
-    [InlineData(10, 150)]     // exactly the tier 1 boundary: 10 * 15 = 150
-    [InlineData(15, 300)]     // tier 1 (10*15=150) + tier 2 (5*30=150) = 300
+    [InlineData(0, 0)]
+    [InlineData(5, 75)]
+    [InlineData(10, 150)]
+    [InlineData(15, 300)]
     public void CalculateBill_AppliesTieredTariffCorrectly(double units, decimal expectedBill)
     {
         var bill = UsageServiceImpl.CalculateBill(units);
@@ -31,6 +31,16 @@ public class UsageServiceUnitTests
         var higher = UsageServiceImpl.CalculateBill(40);
 
         Assert.True(higher > lower);
+    }
+
+    [Fact]
+    public async Task RecordReading_WithNegativeUsage_ThrowsArgumentException()
+    {
+        var db = NewDb();
+        var service = new UsageServiceImpl(db);
+
+        await Assert.ThrowsAsync<ArgumentException>(() =>
+            service.RecordReadingAsync(new RecordReadingRequest("NWSDB-0001", -1)));
     }
 
     [Fact]
