@@ -23,14 +23,13 @@ spec:
           env:
             - name: ASPNETCORE_ENVIRONMENT
               value: "Production"
-            - name: ConnectionStrings__UsageDb
-              valueFrom:
-                secretKeyRef:
-                  name: usage-db-secret
-                  key: connectionString
           resources:
-            requests: { cpu: "100m", memory: "128Mi" }
-            limits: { cpu: "500m", memory: "256Mi" }
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "256Mi"
           livenessProbe:
             httpGet: { path: /health, port: 8080 }
             initialDelaySeconds: 15
@@ -69,4 +68,6 @@ spec:
     - type: Resource
       resource:
         name: cpu
-        target: { type: Utilization, averageUtilization: 70 }
+        target:
+          type: Utilization
+          averageUtilization: 70
