@@ -23,11 +23,6 @@ spec:
           env:
             - name: ASPNETCORE_ENVIRONMENT
               value: "Production"
-            - name: ConnectionStrings__PaymentDb
-              valueFrom:
-                secretKeyRef:
-                  name: payment-db-secret
-                  key: connectionString
           resources:
             requests:
               cpu: "100m"
