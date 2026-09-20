@@ -16,28 +16,35 @@ public class PaymentService : IPaymentService
 
     public async Task<Payment> CreatePaymentAsync(CreatePaymentRequest request)
     {
+        if (string.IsNullOrWhiteSpace(request.AccountNumber))
+            throw new ArgumentException("Account number is required.");
+
         if (request.Amount <= 0)
             throw new ArgumentException("Payment amount must be greater than zero.");
 
+        if (string.IsNullOrWhiteSpace(request.Channel))
+            throw new ArgumentException("Payment channel is required.");
+
         var payment = new Payment
         {
-            AccountNumber = request.AccountNumber,
+            AccountNumber = request.AccountNumber.Trim(),
             Amount = request.Amount,
-            Channel = request.Channel,
+            Channel = request.Channel.Trim(),
             Status = PaymentStatus.Pending
         };
 
         _db.Payments.Add(payment);
         await _db.SaveChangesAsync();
 
-        // Simulate processing through the payment gateway. In production this
-        // would call out to the bank/wallet partner's API asynchronously and
-        // update status via a webhook or message queue event.
+        // The gateway step is simulated for this assignment.
         payment.Status = PaymentStatus.Completed;
         await _db.SaveChangesAsync();
 
-        _logger.LogInformation("Payment {Reference} for account {Account} processed via {Channel}",
-            payment.ReferenceNumber, payment.AccountNumber, payment.Channel);
+        _logger.LogInformation(
+            "Payment {Reference} for account {Account} processed via {Channel}",
+            payment.ReferenceNumber,
+            payment.AccountNumber,
+            payment.Channel);
 
         return payment;
     }
