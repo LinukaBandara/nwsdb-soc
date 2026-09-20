@@ -3,7 +3,7 @@
 A Service-Oriented Computing (SOC) solution for the Sri Lanka National Water
 Supply and Drainage Board (NWSDB) case study — CSE5013 WRIT1.
 
-Two independently deployable **.NET 8 Web API** services (Payment Service,
+Two independently deployable **.NET 10 Web API** services (Payment Service,
 Usage Service), each owning its own data store, consumed by a **React**
 client application and available for third-party partner integration over
 a standard REST/JSON contract.
@@ -14,8 +14,8 @@ a standard REST/JSON contract.
 NWSDB-SOC/
 ├── NWSDB-SOC.sln
 ├── src/
-│   ├── PaymentService/      # .NET 8 Web API — bill payments
-│   └── UsageService/        # .NET 8 Web API — meter readings & billing
+│   ├── PaymentService/      # .NET 10 Web API — bill payments
+│   └── UsageService/       # .NET 10 Web API — meter readings & billing
 ├── tests/
 │   ├── PaymentService.Tests/   # xUnit unit + integration tests
 │   └── UsageService.Tests/
@@ -28,7 +28,7 @@ NWSDB-SOC/
 
 ## Prerequisites
 
-- .NET 8 SDK
+- .NET 10 SDK
 - Node.js 18+ and npm
 - Docker Desktop (optional, for containerised run)
 
