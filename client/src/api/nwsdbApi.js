@@ -1,6 +1,7 @@
 // Each client function calls the corresponding independent REST service.
-const PAYMENT_API = import.meta.env.VITE_PAYMENT_API ?? 'https://localhost:5001/api/v1';
-const USAGE_API = import.meta.env.VITE_USAGE_API ?? 'https://localhost:5011/api/v1';
+// In production Docker deployments, Nginx proxies these relative API paths to the services.
+const PAYMENT_API = import.meta.env.VITE_PAYMENT_API ?? '/api/v1';
+const USAGE_API = import.meta.env.VITE_USAGE_API ?? '/api/v1';
 
 async function handle(response) {
   if (!response.ok) {
