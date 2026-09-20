@@ -11,6 +11,7 @@ builder.Services.AddSwaggerGen(c =>
     c.SwaggerDoc("v1", new() { Title = "NWSDB Usage Service", Version = "v1" });
 });
 
+// EF Core InMemory is used for the academic demonstration.
 builder.Services.AddDbContext<UsageDbContext>(options =>
     options.UseInMemoryDatabase("UsageServiceDb"));
 
@@ -36,8 +37,7 @@ app.UseAuthorization();
 app.MapControllers();
 app.MapGet("/health", () => Results.Ok(new { status = "healthy", service = "UsageService" }));
 
-// Seed a couple of sample readings so the client app has data to show
-// out of the box during a demo/testing session.
+// Seed sample readings so the customer client has data during a demo.
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<UsageDbContext>();
@@ -50,4 +50,5 @@ using (var scope = app.Services.CreateScope())
 
 app.Run();
 
+// Exposed for WebApplicationFactory integration tests.
 public partial class Program { }
