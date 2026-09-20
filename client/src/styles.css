@@ -1,0 +1,160 @@
+:root {
+  font-family: Arial, Helvetica, sans-serif;
+  color: #1f2937;
+  background: #f3f6f8;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  background: #f3f6f8;
+}
+
+button,
+input,
+select {
+  font: inherit;
+}
+
+.app {
+  width: min(960px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 32px 0 48px;
+}
+
+.hero {
+  margin-bottom: 24px;
+  padding: 24px;
+  border-radius: 8px;
+  background: #0b5d4b;
+  color: white;
+}
+
+.hero h1 {
+  margin: 0 0 8px;
+  font-size: 28px;
+}
+
+.hero p {
+  margin: 0;
+}
+
+.card {
+  margin-bottom: 20px;
+  padding: 20px;
+  border: 1px solid #d7dee3;
+  border-radius: 8px;
+  background: white;
+}
+
+.card h2 {
+  margin-top: 0;
+}
+
+.card h3 {
+  margin-top: 24px;
+}
+
+label {
+  display: block;
+  margin-bottom: 14px;
+  font-weight: 600;
+}
+
+input,
+select {
+  display: block;
+  width: 100%;
+  margin-top: 6px;
+  padding: 10px 12px;
+  border: 1px solid #b9c4cb;
+  border-radius: 5px;
+  background: white;
+}
+
+input[readonly] {
+  background: #f5f7f8;
+}
+
+button {
+  padding: 10px 16px;
+  border: 0;
+  border-radius: 5px;
+  background: #0b5d4b;
+  color: white;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #084c3d;
+}
+
+.success {
+  margin: 16px 0;
+  color: #176b3a;
+}
+
+.error {
+  margin: 16px 0;
+  color: #b42318;
+}
+
+dl {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  gap: 10px 16px;
+  margin: 0;
+}
+
+dt {
+  font-weight: 600;
+}
+
+dd {
+  margin: 0;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 12px;
+}
+
+th,
+td {
+  padding: 10px 8px;
+  border-bottom: 1px solid #e2e8ec;
+  text-align: left;
+}
+
+@media (max-width: 640px) {
+  .app {
+    width: min(100% - 20px, 960px);
+    padding-top: 20px;
+  }
+
+  .hero h1 {
+    font-size: 23px;
+  }
+
+  dl {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+
+  dt {
+    margin-top: 8px;
+  }
+
+  table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+}
