@@ -52,21 +52,21 @@ jobs:
         with:
           context: ./src/PaymentService
           push: true
-          tags: nwsdbregistry.azurecr.io/payment-service:${{ github.sha }}
+          tags: nwsdbregistry.azurecr.io/payment-service:1.0.0
 
       - name: Build & push Usage Service
         uses: docker/build-push-action@v5
         with:
           context: ./src/UsageService
           push: true
-          tags: nwsdbregistry.azurecr.io/usage-service:${{ github.sha }}
+          tags: nwsdbregistry.azurecr.io/usage-service:1.0.0
 
       - name: Build & push Client App
         uses: docker/build-push-action@v5
         with:
           context: ./client
           push: true
-          tags: nwsdbregistry.azurecr.io/client-app:${{ github.sha }}
+          tags: nwsdbregistry.azurecr.io/client-app:1.0.0
 
   deploy:
     needs: build-and-push-images
