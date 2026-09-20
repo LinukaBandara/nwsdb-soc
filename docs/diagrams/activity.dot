@@ -1,0 +1,32 @@
+digraph Activity {
+    rankdir=TB;
+    bgcolor="white";
+    fontname="Helvetica";
+    node [fontname="Helvetica" fontsize=10];
+
+    start [shape=circle style=filled fillcolor=black width=0.2 label=""];
+    submit [shape=box style="rounded,filled" fillcolor="#eaf1fb" label="Customer submits payment\n(account, amount, channel)"];
+    validate [shape=diamond style=filled fillcolor="#fff3bf" label="Amount > 0?"];
+    reject [shape=box style="rounded,filled" fillcolor="#fdeeee" label="Return 400 Bad Request"];
+    persistPending [shape=box style="rounded,filled" fillcolor="#eefaf0" label="Persist Payment\n(status = Pending)"];
+    processGateway [shape=box style="rounded,filled" fillcolor="#eefaf0" label="Process via payment\ngateway / partner channel"];
+    gatewayCheck [shape=diamond style=filled fillcolor="#fff3bf" label="Gateway\nconfirms?"];
+    markCompleted [shape=box style="rounded,filled" fillcolor="#eefaf0" label="Update status = Completed\nAssign reference number"];
+    markFailed [shape=box style="rounded,filled" fillcolor="#fdeeee" label="Update status = Failed"];
+    respond201 [shape=box style="rounded,filled" fillcolor="#eaf1fb" label="Return 201 Created\n+ PaymentResponse"];
+    respondFailed [shape=box style="rounded,filled" fillcolor="#eaf1fb" label="Return payment record\nwith Failed status"];
+    endNode [shape=doublecircle style=filled fillcolor=black width=0.2 label="" fontsize=1];
+
+    start -> submit -> validate;
+    validate -> reject [label="No" fontsize=9];
+    validate -> persistPending [label="Yes" fontsize=9];
+    persistPending -> processGateway -> gatewayCheck;
+    gatewayCheck -> markCompleted [label="Yes" fontsize=9];
+    gatewayCheck -> markFailed [label="No" fontsize=9];
+    markCompleted -> respond201 -> endNode;
+    markFailed -> respondFailed -> endNode;
+    reject -> endNode;
+
+    label="Figure — Activity Diagram: Make a Payment";
+    fontsize=13; fontname="Helvetica-Bold"; labelloc=t;
+}

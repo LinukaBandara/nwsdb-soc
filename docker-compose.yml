@@ -1,0 +1,47 @@
+version: "3.9"
+
+services:
+  payment-service:
+    build: ./src/PaymentService
+    container_name: nwsdb-payment-service
+    ports:
+      - "5001:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+    networks:
+      - nwsdb-net
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+
+  usage-service:
+    build: ./src/UsageService
+    container_name: nwsdb-usage-service
+    ports:
+      - "5011:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+    networks:
+      - nwsdb-net
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+
+  client-app:
+    build: ./client
+    container_name: nwsdb-client
+    ports:
+      - "8080:80"
+    depends_on:
+      - payment-service
+      - usage-service
+    networks:
+      - nwsdb-net
+
+networks:
+  nwsdb-net:
+    driver: bridge

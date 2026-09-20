@@ -1,0 +1,13 @@
+﻿bin/
+obj/
+*.user
+.vs/
+node_modules/
+dist/
+.vite/
+.DS_Store
+Thumbs.db
+.idea/
+*.suo
+TestResults/
+*.trx
