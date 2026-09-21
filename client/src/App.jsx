@@ -9,7 +9,12 @@ export default function App() {
     <main className="app">
       <header className="topbar">
         <div className="brand">
-          <div className="brand-mark" aria-hidden="true">water</div>
+          <div className="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24" role="img" aria-label="Water">
+              <path d="M12 2.8C12 2.8 5.5 10.1 5.5 14.6a6.5 6.5 0 0 0 13 0C18.5 10.1 12 2.8 12 2.8Z" />
+              <path className="brand-wave" d="M8.7 15.2c1.1 1.1 2.3 1.6 3.6 1.6 1.3 0 2.5-.5 3.6-1.6" />
+            </svg>
+          </div>
           <div>
             <strong>NWSDB</strong>
             <span>Customer Portal</span>
@@ -54,7 +59,6 @@ export default function App() {
 
       <footer className="footer">
         <span>NWSDB Customer Services</span>
-        <span>Service demonstration</span>
       </footer>
     </main>
   );
