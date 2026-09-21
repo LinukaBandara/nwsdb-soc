@@ -5,41 +5,44 @@ graph ERChen {
     node [fontname="Helvetica" fontsize=10];
     edge [fontname="Helvetica" fontsize=9];
 
-    // Entities (rectangles)
-    Customer [shape=box style=filled fillcolor="#bcd2ee" pos="0,4!"];
-    Payment [shape=box style=filled fillcolor="#eefaf0" pos="6,4!"];
-    MeterReading [shape=box style=filled fillcolor="#eaf1fb" pos="12,4!"];
+    // The implementation has two service-local data models.
+    // Customer is an external actor/business concept, not a persisted table.
+    Payment [shape=box style=filled fillcolor="#eefaf0" label="Payment" pos="0,4!"];
+    MeterReading [shape=box style=filled fillcolor="#eaf1fb" label="MeterReading" pos="9,4!"];
 
-    // Relationships (diamonds, Chen's notation)
-    Makes [shape=diamond style=filled fillcolor="#fff3bf" label="Makes" pos="3,4!"];
-    Has [shape=diamond style=filled fillcolor="#fff3bf" label="Has\nReadings" pos="9,4!"];
+    // Payment attributes
+    P_id [shape=ellipse label="Id (PK)" pos="-2,6!"];
+    P_acc [shape=ellipse label="AccountNumber" pos="0,6.3!"];
+    P_amt [shape=ellipse label="Amount" pos="2,6!"];
+    P_chan [shape=ellipse label="Channel" pos="-2,2!"];
+    P_status [shape=ellipse label="Status" pos="0,1.7!"];
+    P_ref [shape=ellipse label="ReferenceNumber" pos="2,2!"];
+    P_date [shape=ellipse label="CreatedAtUtc" pos="0,7.2!"];
 
-    Customer -- Makes [label="1"];
-    Makes -- Payment [label="N"];
-    Customer -- Has [label="1"];
-    Has -- MeterReading [label="N"];
+    Payment -- P_id;
+    Payment -- P_acc;
+    Payment -- P_amt;
+    Payment -- P_chan;
+    Payment -- P_status;
+    Payment -- P_ref;
+    Payment -- P_date;
 
-    // Attributes (ellipses) — Customer
-    C_acc [shape=ellipse label="AccountNumber\n(PK)" pos="-1.5,5.5!"];
-    C_name [shape=ellipse label="Name" pos="0,5.8!"];
-    C_addr [shape=ellipse label="Address" pos="1.5,5.5!"];
-    Customer -- C_acc; Customer -- C_name; Customer -- C_addr;
+    // MeterReading attributes
+    M_id [shape=ellipse label="Id (PK)" pos="7,6!"];
+    M_acc [shape=ellipse label="AccountNumber" pos="9,6.3!"];
+    M_cubic [shape=ellipse label="CubicMetres" pos="11,6!"];
+    M_date [shape=ellipse label="ReadingDateUtc" pos="9,7.2!"];
 
-    // Attributes — Payment
-    P_id [shape=ellipse label="Id (PK)" pos="4.7,5.8!"];
-    P_amt [shape=ellipse label="Amount" pos="6,6!"];
-    P_chan [shape=ellipse label="Channel" pos="7.3,5.8!"];
-    P_status [shape=ellipse label="Status" pos="4.7,2.2!"];
-    P_ref [shape=ellipse label="ReferenceNumber" pos="6,2!" style=filled fillcolor="#f0f0f0"];
-    P_date [shape=ellipse label="CreatedAtUtc" pos="7.3,2.2!"];
-    Payment -- P_id; Payment -- P_amt; Payment -- P_chan;
-    Payment -- P_status; Payment -- P_ref; Payment -- P_date;
+    MeterReading -- M_id;
+    MeterReading -- M_acc;
+    MeterReading -- M_cubic;
+    MeterReading -- M_date;
 
-    // Attributes — MeterReading
-    M_id [shape=ellipse label="Id (PK)" pos="10.7,5.8!"];
-    M_cubic [shape=ellipse label="CubicMetres" pos="12,6!"];
-    M_date [shape=ellipse label="ReadingDateUtc" pos="13.3,5.8!"];
-    MeterReading -- M_id; MeterReading -- M_cubic; MeterReading -- M_date;
+    // AccountNumber is a shared business identifier in API requests.
+    // There is no database FK between these independent service stores.
+    Account [shape=diamond style=filled fillcolor="#fff3bf" label="Account\nidentifier" pos="4.5,4!"];
+    Payment -- Account;
+    Account -- MeterReading;
 
     labelloc="t";
     label="Figure — Entity-Relationship Diagram (Chen's Notation)";
