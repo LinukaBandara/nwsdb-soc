@@ -9,7 +9,7 @@ export default function App() {
     <main className="app">
       <header className="topbar">
         <div className="brand">
-          <div className="brand-mark" aria-hidden="true">W</div>
+          <div className="brand-mark" aria-hidden="true">water</div>
           <div>
             <strong>NWSDB</strong>
             <span>Customer Portal</span>
@@ -24,7 +24,6 @@ export default function App() {
           <h1 id="page-title">Your water account</h1>
           <p>View your latest usage and make a water bill payment securely.</p>
         </div>
-        <div className="water-orb" aria-hidden="true">⌁</div>
       </section>
 
       <nav className="section-nav" aria-label="Customer services">
