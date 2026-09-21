@@ -11,12 +11,19 @@ digraph ClassDiagram {
         style="rounded";
 
         Payment [label="{Payment (entity)|+ Id : int\l+ AccountNumber : string\l+ Amount : decimal\l+ Channel : string\l+ Status : PaymentStatus\l+ CreatedAtUtc : DateTime\l+ ReferenceNumber : string\l}" fillcolor="#eefaf0"];
-        PaymentStatus [label="{<<enum>>\nPaymentStatus|Pending\lCompleted\lFailed\l}" fillcolor="#f5f5f5"];
-        CreatePaymentRequest [label="{<<record>>\nCreatePaymentRequest|+ AccountNumber : string\l+ Amount : decimal\l+ Channel : string\l}" fillcolor="#eaf1fb"];
-        PaymentResponse [label="{<<record>>\nPaymentResponse|+ Id : int\l+ AccountNumber : string\l+ Amount : decimal\l+ Channel : string\l+ Status : string\l+ ReferenceNumber : string\l+ CreatedAtUtc : DateTime\l}" fillcolor="#eaf1fb"];
-        IPaymentService [label="{<<interface>>\nIPaymentService|+ CreatePaymentAsync(req)\l+ GetPaymentAsync(id)\l+ GetPaymentsForAccountAsync(acc)\l+ UpdateStatusAsync(id,status)\l}" fillcolor="#fff3bf"];
+
+        PaymentStatus [label="{PaymentStatus (enum)|Pending\lCompleted\lFailed\l}" fillcolor="#f5f5f5"];
+
+        CreatePaymentRequest [label="{CreatePaymentRequest (record)|+ AccountNumber : string\l+ Amount : decimal\l+ Channel : string\l}" fillcolor="#eaf1fb"];
+
+        PaymentResponse [label="{PaymentResponse (record)|+ Id : int\l+ AccountNumber : string\l+ Amount : decimal\l+ Channel : string\l+ Status : string\l+ ReferenceNumber : string\l+ CreatedAtUtc : DateTime\l}" fillcolor="#eaf1fb"];
+
+        IPaymentService [label="{IPaymentService (interface)|+ CreatePaymentAsync(req)\l+ GetPaymentAsync(id)\l+ GetPaymentsForAccountAsync(acc)\l+ UpdateStatusAsync(id,status)\l}" fillcolor="#fff3bf"];
+
         PaymentServiceImpl [label="{PaymentService| - _db : PaymentDbContext\l- _logger : ILogger\l|+ CreatePaymentAsync(req)\l+ GetPaymentAsync(id)\l+ GetPaymentsForAccountAsync(acc)\l+ UpdateStatusAsync(id,status)\l}" ];
+
         PaymentsController [label="{PaymentsController|- _paymentService : IPaymentService\l|+ CreatePayment(req)\l+ GetPayment(id)\l+ GetPaymentsForAccount(acc)\l+ UpdateStatus(id,status)\l}" fillcolor="#bcd2ee"];
+
         PaymentDbContext [label="{PaymentDbContext|+ Payments : DbSet<Payment>\l}" fillcolor="#e2e2e2"];
 
         PaymentsController -> IPaymentService [arrowhead=vee label="uses"];
@@ -34,11 +41,17 @@ digraph ClassDiagram {
         style="rounded";
 
         MeterReading [label="{MeterReading (entity)|+ Id : int\l+ AccountNumber : string\l+ CubicMetres : double\l+ ReadingDateUtc : DateTime\l}" fillcolor="#eaf1fb"];
-        RecordReadingRequest [label="{<<record>>\nRecordReadingRequest|+ AccountNumber : string\l+ CubicMetres : double\l}" fillcolor="#eaf1fb"];
-        UsageResponse [label="{<<record>>\nUsageResponse|+ AccountNumber : string\l+ CurrentCubicMetres : double\l+ PreviousCubicMetres : double\l+ UnitsConsumed : double\l+ EstimatedBill : decimal\l+ ReadingDateUtc : DateTime\l}" fillcolor="#eaf1fb"];
-        IUsageService [label="{<<interface>>\nIUsageService|+ RecordReadingAsync(req)\l+ GetLatestUsageAsync(acc)\l+ GetHistoryAsync(acc)\l}" fillcolor="#fff3bf"];
+
+        RecordReadingRequest [label="{RecordReadingRequest (record)|+ AccountNumber : string\l+ CubicMetres : double\l}" fillcolor="#eaf1fb"];
+
+        UsageResponse [label="{UsageResponse (record)|+ AccountNumber : string\l+ CurrentCubicMetres : double\l+ PreviousCubicMetres : double\l+ UnitsConsumed : double\l+ EstimatedBill : decimal\l+ ReadingDateUtc : DateTime\l}" fillcolor="#eaf1fb"];
+
+        IUsageService [label="{IUsageService (interface)|+ RecordReadingAsync(req)\l+ GetLatestUsageAsync(acc)\l+ GetHistoryAsync(acc)\l}" fillcolor="#fff3bf"];
+
         UsageServiceImpl [label="{UsageService| - _db : UsageDbContext\l|+ RecordReadingAsync(req)\l+ GetLatestUsageAsync(acc)\l+ GetHistoryAsync(acc)\l+ CalculateBill(units)\l}" ];
+
         UsageController [label="{UsageController|- _usageService : IUsageService\l|+ RecordReading(req)\l+ GetLatest(acc)\l+ GetHistory(acc)\l}" fillcolor="#bcd2ee"];
+
         UsageDbContext [label="{UsageDbContext|+ Readings : DbSet<MeterReading>\l}" fillcolor="#e2e2e2"];
 
         UsageController -> IUsageService [arrowhead=vee label="uses"];
@@ -49,6 +62,8 @@ digraph ClassDiagram {
         UsageController -> UsageResponse [arrowhead=open style=dotted label="returns"];
     }
 
-    label="Figure — Class Diagram: Payment and Usage Services";
-    fontsize=13; fontname="Helvetica-Bold"; labelloc=t;
+    label="Figure ? Class Diagram: Payment and Usage Services";
+    fontsize=13;
+    fontname="Helvetica-Bold";
+    labelloc=t;
 }
