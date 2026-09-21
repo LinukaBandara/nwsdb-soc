@@ -1,0 +1,31 @@
+digraph SequencePayment {
+    rankdir=LR;
+    bgcolor="white";
+    fontname="Helvetica";
+    node [shape=box fontname="Helvetica" fontsize=10 style="rounded,filled" fillcolor="#ffffff"];
+    edge [fontname="Helvetica" fontsize=9];
+
+    Customer [label="Customer" fillcolor="#bcd2ee"];
+    Client [label="React Client" fillcolor="#eaf1fb"];
+    Controller [label="PaymentsController" fillcolor="#eaf1fb"];
+    Service [label="IPaymentService /\nPaymentService" fillcolor="#fff3bf"];
+    Db [label="PaymentDbContext" fillcolor="#e2e2e2"];
+    Data [label="Payment data" fillcolor="#eefaf0"];
+
+    Customer -> Client [label="1. Enter amount + channel"];
+    Client -> Controller [label="2. POST /api/v1/payments"];
+    Controller -> Service [label="3. CreatePaymentAsync(request)"];
+    Service -> Db [label="4. Add payment (Pending)"];
+    Db -> Data [label="5. SaveChangesAsync()"];
+    Data -> Db [label="6. Saved"];
+    Db -> Service [label="7. Payment stored"];
+    Service -> Service [label="8. Simulate gateway -> Completed"];
+    Service -> Db [label="9. Save completed status"];
+    Db -> Service [label="10. Saved"];
+    Service -> Controller [label="11. Payment"];
+    Controller -> Client [label="12. 201 Created + PaymentResponse"];
+    Client -> Customer [label="13. Show reference + status"];
+    
+    label="Figure — Sequence Diagram: Make a Payment";
+    fontsize=13; fontname="Helvetica-Bold"; labelloc=t;
+}
