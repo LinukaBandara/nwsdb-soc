@@ -3,7 +3,7 @@ import { PaymentApi } from '../api/nwsdbApi';
 
 const CHANNELS = [
   { id: 'NWSDB-Portal', name: 'NWSDB Direct Portal', desc: 'Instant Clearance / Credit Card' },
-  { id: 'PayHere', name: 'PayHere Sandbox', desc: 'Secure multi-method payment checkout' }
+  { id: 'PayHere', name: 'PayHere', desc: 'Secure online payment gateway' }
 ];
 
 export default function PaymentPanel({ accountNumber, onPaymentSuccess }) {
@@ -40,8 +40,6 @@ export default function PaymentPanel({ accountNumber, onPaymentSuccess }) {
       setStatus({ ok: false, message: 'Please specify an amount greater than zero.' });
       return;
     }
-
-    const selectedChannel = CHANNELS.find((item) => item.id === channel);
 
     setLoading(true);
     try {
