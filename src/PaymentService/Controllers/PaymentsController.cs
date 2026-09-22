@@ -77,9 +77,13 @@ public class PaymentsController : ControllerBase
     [HttpPatch("{id:int}/status")]
     [Authorize(Roles = "Staff,Admin")]
     [ProducesResponseType(typeof(PaymentResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<PaymentResponse>> UpdateStatus(int id, [FromBody] PaymentStatus status)
+    public async Task<ActionResult<PaymentResponse>> UpdateStatus(int id, [FromBody] UpdatePaymentStatusRequest request)
     {
+        if (!Enum.TryParse<PaymentStatus>(request.Status, true, out var status))
+            return BadRequest("Status must be Pending, Completed or Failed.");
+
         var payment = await _paymentService.UpdateStatusAsync(id, status);
         return payment is null ? NotFound() : Ok(PaymentResponse.FromEntity(payment));
     }
@@ -94,3 +98,5 @@ public class PaymentsController : ControllerBase
                string.Equals(tokenAccount, accountNumber.Trim(), StringComparison.OrdinalIgnoreCase);
     }
 }
+
+public record UpdatePaymentStatusRequest(string Status);
