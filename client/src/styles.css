@@ -492,3 +492,35 @@ td {
     padding: 10px 8px;
   }
 }
+
+.user-menu { display:flex; align-items:center; gap:12px; }
+.user-meta { text-align:right; }
+.user-meta strong,.user-meta span { display:block; }
+.user-meta strong { color:var(--navy); font-size:12px; }
+.user-meta span { color:var(--muted); font-size:10px; margin-top:2px; }
+.logout-button { padding:8px 12px; background:#fff; color:var(--navy); border:1px solid var(--line); box-shadow:none; font-size:11px; }
+.logout-button:hover { background:var(--ice); box-shadow:none; }
+button:disabled { opacity:.65; cursor:not-allowed; transform:none; }
+.auth-page { min-height:100vh; display:grid; place-items:center; padding:24px; background:linear-gradient(180deg,#eef9ff 0%,#fff 55%,#f7fbfe 100%); }
+.auth-card { width:min(440px,100%); padding:32px; border:1px solid var(--line); border-radius:20px; background:rgba(255,255,255,.98); box-shadow:0 18px 50px rgba(11,53,88,.10); }
+.auth-loading { text-align:center; color:var(--muted); }
+.auth-brand { display:flex; align-items:center; gap:11px; margin-bottom:30px; }
+.auth-brand strong,.auth-brand span { display:block; }
+.auth-brand strong { color:var(--navy); font-size:15px; font-weight:800; }
+.auth-brand span { color:var(--muted); font-size:12px; margin-top:2px; }
+.auth-heading { margin-bottom:24px; }
+.auth-heading .eyebrow { color:var(--blue); opacity:1; margin-bottom:7px; }
+.auth-heading h1 { margin:0 0 8px; color:var(--navy); font-size:29px; letter-spacing:-.03em; }
+.auth-heading p:last-child { margin:0; color:var(--muted); font-size:13px; line-height:1.6; }
+.auth-card form button[type="submit"] { width:100%; min-height:44px; margin-top:4px; }
+.auth-switch { display:flex; justify-content:center; gap:6px; margin-top:20px; color:var(--muted); font-size:12px; }
+.link-button { padding:0; border:0; background:none; color:var(--blue); box-shadow:none; font-size:12px; }
+.link-button:hover { transform:none; box-shadow:none; text-decoration:underline; }
+.auth-note { margin:20px 0 0; padding-top:15px; border-top:1px solid #e8f1f6; color:#7890a0; text-align:center; font-size:10px; }
+@media (max-width:680px) {
+  .user-menu { gap:8px; }
+  .user-meta { display:none; }
+  .logout-button { min-height:38px; width:auto; }
+  .auth-page { padding:14px; }
+  .auth-card { padding:24px 20px; border-radius:16px; }
+}
