@@ -122,7 +122,7 @@ export default function App() {
 
       <section className="hero" aria-labelledby="page-title">
         <div className="hero-content">
-          <p className="eyebrow">National Water Supply & Drainage Board • Sri Lanka</p>
+          <p className="eyebrow">National Water Supply & Drainage Board | Sri Lanka</p>
           <h1 id="page-title">Water Account Management</h1>
           <p>
             Monitor verified meter telemetry, evaluate current domestic billing tiers, and complete secure bill settlements online.
@@ -182,8 +182,8 @@ export default function App() {
       </div>
 
       <footer className="footer">
-        <span>© National Water Supply & Drainage Board — Sri Lanka. All rights reserved.</span>
-        <span>Secure Session ID: {user.userId} • Role: {user.role}</span>
+        <span>© National Water Supply & Drainage Board | Sri Lanka. All rights reserved.</span>
+        <span>Secure Session ID: {user.userId} | Role: {user.role}</span>
       </footer>
     </main>
   );
