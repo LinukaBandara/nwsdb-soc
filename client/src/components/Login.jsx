@@ -3,29 +3,12 @@ import { AuthApi } from '../api/nwsdbApi';
 
 export default function Login({ onAuthenticated }) {
   const [mode, setMode] = useState('login');
-  const [form, setForm] = useState({ fullName: '', email: '', password: '', accountNumber: 'NWSDB-0001' });
+  const [form, setForm] = useState({ fullName: '', email: '', password: '', accountNumber: '' });
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
   const update = (key) => (event) => setForm((current) => ({ ...current, [key]: event.target.value }));
-
-  const setDemoAccount = (role) => {
-    setError('');
-    if (role === 'admin') {
-      setMode('login');
-      setForm({ fullName: 'Administrator', email: 'admin@nwsdb.local', password: 'Admin@123', accountNumber: '' });
-    } else if (role === 'staff') {
-      setMode('login');
-      setForm({ fullName: 'Service Staff', email: 'staff@nwsdb.local', password: 'Staff@123', accountNumber: '' });
-    } else if (role === 'partner') {
-      setMode('login');
-      setForm({ fullName: 'Partner Agency', email: 'partner@nwsdb.local', password: 'Partner@123', accountNumber: '' });
-    } else if (role === 'customer') {
-      setMode('login');
-      setForm({ fullName: 'Domestic Customer', email: 'customer@nwsdb.local', password: 'Customer@123', accountNumber: 'NWSDB-0001' });
-    }
-  };
 
   const submit = async (event) => {
     event.preventDefault();
@@ -71,7 +54,7 @@ export default function Login({ onAuthenticated }) {
           </div>
           <div>
             <strong>National Water Supply & Drainage Board</strong>
-            <span>Customer & Operations Gateway</span>
+            <span>Customer Service Portal</span>
           </div>
         </div>
 
@@ -83,24 +66,6 @@ export default function Login({ onAuthenticated }) {
               ? 'Access water consumption intelligence, bill settlement, or staff operations.'
               : 'Register your water supply account to manage bills and track consumption.'}
           </p>
-        </div>
-
-        <div className="demo-accounts-panel">
-          <div className="demo-accounts-title">
-            <span>Quick Demo Credentials</span>
-            <span className="muted">1-Click Fill</span>
-          </div>
-          <div className="demo-chips">
-            <button type="button" className="demo-chip" onClick={() => setDemoAccount('admin')}>
-              Admin <span>(Full Access)</span>
-            </button>
-            <button type="button" className="demo-chip" onClick={() => setDemoAccount('staff')}>
-              Staff <span>(Operations)</span>
-            </button>
-            <button type="button" className="demo-chip" onClick={() => setDemoAccount('customer')}>
-              Customer <span>(NWSDB-0001)</span>
-            </button>
-          </div>
         </div>
 
         <form onSubmit={submit}>
