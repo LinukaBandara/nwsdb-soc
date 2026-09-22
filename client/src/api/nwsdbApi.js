@@ -55,6 +55,13 @@ export const AuthApi = {
 };
 
 export const PaymentApi = {
+  createPayHereCheckout: (accountNumber, amount) =>
+    fetch(`PAYMENT_API/payments/payhere/checkout`, authorizedOptions({
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ accountNumber, amount: Number(amount) })
+    })).then(handle),
+
   create: (accountNumber, amount, channel) =>
     fetch(`${PAYMENT_API}/payments`, authorizedOptions({
       method: 'POST',
