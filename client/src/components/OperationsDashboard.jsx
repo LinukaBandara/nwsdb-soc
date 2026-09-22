@@ -2,7 +2,8 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { PaymentApi, UsageApi, AuthApi } from '../api/nwsdbApi';
 
 function StatusPill({ status }) {
-  return <span className={`status-pill status-${String(status).toLowerCase()}`}>{status}</span>;
+  const slug = String(status).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  return <span className={`status-pill status-${slug}`}><i aria-hidden="true" />{status}</span>;
 }
 
 function Icon({ name }) {
@@ -33,6 +34,7 @@ export default function OperationsDashboard({ user, onLogout }) {
   const [error, setError] = useState('');
   const [users, setUsers] = useState([]);
   const [newUser, setNewUser] = useState({ fullName: '', email: '', password: '', role: 'Staff', accountNumber: '' });
+  const [lastUpdated, setLastUpdated] = useState(null);
 
   const isAdmin = user.role === 'Admin';
 
@@ -41,13 +43,21 @@ export default function OperationsDashboard({ user, onLogout }) {
     if (!value) return;
     setLoading(true); setError(''); setMessage('');
     try {
-      const [latest, history, paymentHistory] = await Promise.all([
+      const results = await Promise.allSettled([
         UsageApi.latest(value), UsageApi.history(value), PaymentApi.historyForAccount(value)
       ]);
+      const [latestResult, historyResult, paymentsResult] = results;
+      const latest = latestResult.status === 'fulfilled' ? latestResult.value : null;
+      const history = historyResult.status === 'fulfilled' ? historyResult.value : [];
+      const paymentHistory = paymentsResult.status === 'fulfilled' ? paymentsResult.value : [];
       setSelectedAccount(value);
       setUsage(latest);
       setUsageHistory(history);
       setPayments(paymentHistory);
+      setLastUpdated(new Date());
+      const failures = results.filter(result => result.status === 'rejected');
+      if (failures.length === results.length) throw failures[0].reason;
+      if (failures.length) setMessage('Account loaded. Some service data is currently unavailable.');
     } catch (e) {
       setError(e.message);
       setUsage(null); setUsageHistory([]); setPayments([]);
@@ -136,6 +146,7 @@ export default function OperationsDashboard({ user, onLogout }) {
         <div className="ops-brand">
           <div className="brand-mark" aria-hidden="true"><span>W</span></div>
           <div><strong>NWSDB</strong><span>Service Operations</span></div>
+          <span className="ops-version">SOC</span>
         </div>
         <div className="ops-nav-label">WORKSPACE</div>
         <nav>
@@ -161,24 +172,24 @@ export default function OperationsDashboard({ user, onLogout }) {
         <section className="ops-content">
           <div className="ops-page-heading">
             <div><p className="eyebrow">National Water Supply & Drainage Board</p><h1>{title}</h1><p>{subtitle}</p></div>
-            <div className="ops-page-actions"><StatusPill status="System online" /></div>
+            <div className="ops-page-actions"><div className="ops-live-status"><span className="live-dot" />All services online</div>{lastUpdated && <span className="ops-updated">Updated {lastUpdated.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>}</div>
           </div>
 
-          {error && <p className="error">{error}</p>}
-          {message && <p className="success">{message}</p>}
+          {error && <div className="ops-alert ops-alert-error" role="alert"><strong>Action could not be completed</strong><span>{error}</span></div>}
+          {message && <div className="ops-alert ops-alert-success" role="status"><strong>Operation complete</strong><span>{message}</span></div>}
 
           {active === 'dashboard' && (
             <>
               <div className="ops-kpi-grid">
-                <div className="ops-kpi"><span>Total loaded payments</span><strong>{payments.length}</strong><small>Current account</small></div>
-                <div className="ops-kpi"><span>Pending payments</span><strong>{pendingPayments}</strong><small>Requires processing</small></div>
-                <div className="ops-kpi"><span>Usage records</span><strong>{usageHistory.length}</strong><small>Meter history</small></div>
-                <div className="ops-kpi"><span>Latest consumption</span><strong>{usage ? `${usage.unitsConsumed} m³` : '—'}</strong><small>Selected account</small></div>
+                <div className="ops-kpi"><div className="ops-kpi-top"><span>Payments</span><span className="kpi-icon">↗</span></div><strong>{payments.length}</strong><small><b>{completedPayments}</b> completed · {pendingPayments} pending</small></div>
+                <div className="ops-kpi"><div className="ops-kpi-top"><span>Pending payments</span><span className="kpi-icon kpi-warning">!</span></div><strong>{pendingPayments}</strong><small>{pendingPayments ? 'Requires processing' : 'No action required'}</small></div>
+                <div className="ops-kpi"><div className="ops-kpi-top"><span>Usage records</span><span className="kpi-icon">≈</span></div><strong>{usageHistory.length}</strong><small>Meter history for selected account</small></div>
+                <div className="ops-kpi"><div className="ops-kpi-top"><span>Latest consumption</span><span className="kpi-icon">◌</span></div><strong>{usage ? `${usage.unitsConsumed} <em>m³</em>` : '—'}</strong><small>{usage ? 'Units consumed' : 'Load an account'}</small></div>
               </div>
 
               <div className="ops-dashboard-grid">
                 <section className="ops-panel ops-large">
-                  <div className="ops-panel-title"><div><span className="card-kicker">Account intelligence</span><h2>Consumption overview</h2></div><span className="ops-caption">{selectedAccount || 'NWSDB-0001'}</span></div>
+                  <div className="ops-panel-title"><div><span className="card-kicker">Account intelligence</span><h2>Consumption overview</h2></div><div className="ops-panel-meta"><span className="ops-caption">{selectedAccount || 'NWSDB-0001'}</span><span className="ops-period">Last 7 readings</span></div></div>
                   {usage ? <div className="ops-overview">
                     <div className="ops-big-number"><span>Current reading</span><strong>{usage.currentCubicMetres} <em>m³</em></strong><small>Estimated bill Rs. {Number(usage.estimatedBill).toFixed(2)}</small></div>
                     <div className="ops-bars">{usageHistory.slice(0, 7).reverse().map((r, i) => <div className="ops-bar-item" key={r.id}><div className="ops-bar" style={{height:`${Math.max(12, Math.min(100, Number(r.cubicMetres || 0) / Math.max(1, Number(usage.currentCubicMetres || 1)) * 100))}%`}}></div><span>{i + 1}</span></div>)}</div>
@@ -186,9 +197,9 @@ export default function OperationsDashboard({ user, onLogout }) {
                 </section>
 
                 <section className="ops-panel">
-                  <div className="ops-panel-title"><div><span className="card-kicker">Account</span><h2>Quick lookup</h2></div><Icon name="search" /></div>
+                  <div className="ops-panel-title"><div><span className="card-kicker">Account</span><h2>Quick lookup</h2></div><div className="ops-search-badge"><Icon name="search" /></div></div>
                   <form className="ops-lookup" onSubmit={e => { e.preventDefault(); loadAccount(); }}>
-                    <label>Customer account<input value={accountNumber} onChange={e => setAccountNumber(e.target.value)} placeholder="NWSDB-0001" /></label>
+                    <label>Customer account<div className="ops-input-wrap"><Icon name="search" /><input value={accountNumber} onChange={e => setAccountNumber(e.target.value)} placeholder="NWSDB-0001" /></div></label>
                     <button type="submit" disabled={loading}>{loading ? 'Loading…' : 'Open account'}</button>
                   </form>
                   {usage && <div className="ops-mini-grid"><div><span>Average reading</span><strong>{avgUsage} m³</strong></div><div><span>Payments</span><strong>{payments.length}</strong></div></div>}
@@ -196,7 +207,7 @@ export default function OperationsDashboard({ user, onLogout }) {
               </div>
 
               <section className="ops-panel ops-table-panel">
-                <div className="ops-panel-title"><div><span className="card-kicker">Transactions</span><h2>Recent payments</h2></div><button type="button" className="ops-text-button" onClick={() => setActive('payments')}>View all →</button></div>
+                <div className="ops-panel-title"><div><span className="card-kicker">Transactions</span><h2>Recent payments</h2></div><button type="button" className="ops-text-button" onClick={() => setActive('payments')}>View all <span>→</span></button></div>
                 <PaymentTable payments={payments.slice(0, 5)} onComplete={updatePaymentStatus} />
               </section>
             </>
