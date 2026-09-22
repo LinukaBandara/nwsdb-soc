@@ -146,7 +146,7 @@ export default function App() {
           </p>
           <div className="account-badges">
             <span className="status-pill status-completed">Active Connection</span>
-            <span className="status-pill status-customer">Domestic Standard Tariff</span>
+            <span className="status-pill status-customer">Demonstration Billing Model</span>
             <span className="status-pill status-operational">Automated Telemetry</span>
           </div>
         </div>
