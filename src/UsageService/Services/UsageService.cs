@@ -24,6 +24,7 @@ public class UsageService : IUsageService
         var previousReading = await _db.Readings
             .Where(r => r.AccountNumber == accountNumber)
             .OrderByDescending(r => r.ReadingDateUtc)
+            .ThenByDescending(r => r.Id)
             .Select(r => (double?)r.CubicMetres)
             .FirstOrDefaultAsync();
 
@@ -48,6 +49,7 @@ public class UsageService : IUsageService
         var readings = await _db.Readings
             .Where(r => r.AccountNumber == accountNumber)
             .OrderByDescending(r => r.ReadingDateUtc)
+            .ThenByDescending(r => r.Id)
             .Take(2)
             .ToListAsync();
 
@@ -69,6 +71,7 @@ public class UsageService : IUsageService
         return await _db.Readings
             .Where(r => r.AccountNumber == accountNumber)
             .OrderByDescending(r => r.ReadingDateUtc)
+            .ThenByDescending(r => r.Id)
             .ToListAsync();
     }
 
