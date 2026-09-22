@@ -20,9 +20,19 @@ public class UsageService : IUsageService
         if (request.CubicMetres < 0)
             throw new ArgumentException("Cubic metres cannot be negative.");
 
+        var accountNumber = request.AccountNumber.Trim();
+        var previousReading = await _db.Readings
+            .Where(r => r.AccountNumber == accountNumber)
+            .OrderByDescending(r => r.ReadingDateUtc)
+            .Select(r => (double?)r.CubicMetres)
+            .FirstOrDefaultAsync();
+
+        if (previousReading.HasValue && request.CubicMetres < previousReading.Value)
+            throw new ArgumentException($"Cubic metres cannot be lower than the previous reading of {previousReading.Value:0.##} m³.");
+
         var reading = new MeterReading
         {
-            AccountNumber = request.AccountNumber.Trim(),
+            AccountNumber = accountNumber,
             CubicMetres = request.CubicMetres
         };
 
@@ -33,6 +43,8 @@ public class UsageService : IUsageService
 
     public async Task<UsageResponse?> GetLatestUsageAsync(string accountNumber)
     {
+        accountNumber = accountNumber.Trim();
+
         var readings = await _db.Readings
             .Where(r => r.AccountNumber == accountNumber)
             .OrderByDescending(r => r.ReadingDateUtc)
@@ -50,11 +62,15 @@ public class UsageService : IUsageService
             CalculateBill(consumed), current.ReadingDateUtc);
     }
 
-    public async Task<IReadOnlyList<MeterReading>> GetHistoryAsync(string accountNumber) =>
-        await _db.Readings
+    public async Task<IReadOnlyList<MeterReading>> GetHistoryAsync(string accountNumber)
+    {
+        accountNumber = accountNumber.Trim();
+
+        return await _db.Readings
             .Where(r => r.AccountNumber == accountNumber)
             .OrderByDescending(r => r.ReadingDateUtc)
             .ToListAsync();
+    }
 
     /// <summary>
     /// Calculates an estimated bill using a simplified tiered tariff
