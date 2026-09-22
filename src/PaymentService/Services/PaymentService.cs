@@ -78,6 +78,7 @@ public class PaymentService : IPaymentService
         await _db.Payments
             .Where(p => p.AccountNumber == accountNumber)
             .OrderByDescending(p => p.CreatedAtUtc)
+            .ThenByDescending(p => p.Id)
             .ToListAsync();
 
     public async Task<Payment?> UpdateStatusAsync(int id, PaymentStatus status)
