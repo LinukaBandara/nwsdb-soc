@@ -52,6 +52,7 @@ services:
     ports:
       - "8080:80"
     depends_on:
+      - identity-svc
       - payment-svc
       - usage-svc
     networks:
