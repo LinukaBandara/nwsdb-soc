@@ -2517,3 +2517,62 @@ tbody tr:hover {
     grid-template-columns: 1fr;
   }
 }
+
+
+/* Final operations layout alignment */
+.ops-sidebar {
+  padding: 20px 14px 18px;
+  box-sizing: border-box;
+}
+
+.ops-brand {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 58px;
+  margin-bottom: 14px;
+}
+
+.ops-sidebar nav {
+  width: 100%;
+}
+
+.ops-sidebar nav button {
+  box-sizing: border-box;
+  min-height: 42px;
+  margin: 0;
+}
+
+.ops-sidebar-bottom {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 14px 0 0;
+  margin-top: auto;
+}
+
+.ops-role {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 42px;
+  margin: 0 0 8px;
+  padding: 9px 10px;
+}
+
+.ops-signout {
+  box-sizing: border-box;
+  min-height: 42px;
+  margin: 0;
+  padding: 9px 12px;
+  justify-content: flex-start;
+}
+
+.ops-signout .ops-icon {
+  width: 17px;
+  height: 17px;
+  flex: 0 0 17px;
+}
+
+@media (max-width: 768px) {
+  .ops-sidebar {
+    padding: 12px 16px;
+  }
+}
