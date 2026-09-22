@@ -92,7 +92,7 @@ export default function PublicHome({ onLogin, onRegister }) {
                 <span style={{height:'61%'}} /><span style={{height:'74%'}} /><span style={{height:'91%'}} />
                 <div className="public-chart-line" />
               </div>
-              <div className="public-card-footer"><span>Latest verified reading</span><strong>24 Sep 2026</strong></div>
+              <div className="public-card-footer"><span>Latest verified reading</span><strong>24 Aug 2026</strong></div>
             </div>
             <div className="public-float-card public-float-payment">
               <span className="public-float-icon">✓</span>
