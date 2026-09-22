@@ -14,7 +14,7 @@ export default function App() {
   useEffect(() => {
     if (!localStorage.getItem('nwsdb_token')) { setChecking(false); return; }
     AuthApi.me().then((current) => {
-      const next = { userId: current.userId, fullName: current.fullName, email: current.email, role: current.role, accountNumber: current.accountNumber };
+      const next = { userId: current.id, fullName: current.fullName, email: current.email, role: current.role, accountNumber: current.accountNumber };
       localStorage.setItem('nwsdb_user', JSON.stringify(next));
       setUser(next);
     }).catch(() => {
