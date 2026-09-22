@@ -19,11 +19,24 @@ export default function UsagePanel({ accountNumber, refreshTrigger }) {
         if (latestRes.status === 'fulfilled') {
           setUsage(latestRes.value);
         } else {
-          setError(latestRes.reason?.message || 'Unable to fetch latest meter usage');
+          const message = latestRes.reason?.message || '';
+          // A newly created customer may not have a meter reading yet.
+          // Treat that expected 404 as an empty account instead of an API error.
+          if (message.includes('API error 404')) {
+            setUsage(null);
+          } else {
+            setError(message || 'Unable to fetch latest meter usage');
+          }
         }
 
         if (historyRes.status === 'fulfilled') {
           setHistory(historyRes.value || []);
+        } else {
+          const message = historyRes.reason?.message || '';
+          if (!message.includes('API error 404')) {
+            setError(message || 'Unable to fetch meter history');
+          }
+          setHistory([]);
         }
       })
       .finally(() => setLoading(false));
