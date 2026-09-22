@@ -261,7 +261,7 @@ export default function OperationsDashboard({ user, onLogout }) {
       <main className="ops-main">
         <header className="ops-header">
           <div className="ops-breadcrumb">
-            NWSDB Service Operations / <strong>{title}</strong>
+            NWSDB Customer Services / <strong>{title}</strong>
           </div>
           <div className="ops-header-user">
             <div>
@@ -277,7 +277,7 @@ export default function OperationsDashboard({ user, onLogout }) {
         <section className="ops-content">
           <div className="ops-page-heading">
             <div>
-              <p className="eyebrow">Democratic Socialist Republic of Sri Lanka</p>
+              <p className="eyebrow">National Water Supply & Drainage Board</p>
               <h1>{title}</h1>
               <p>{subtitle}</p>
             </div>
@@ -356,7 +356,7 @@ export default function OperationsDashboard({ user, onLogout }) {
                 <section className="ops-panel">
                   <div className="ops-panel-title">
                     <div>
-                      <span className="card-kicker">Consumption Telemetry</span>
+                      <span className="card-kicker">Water Consumption</span>
                       <h2>Account Usage Trend</h2>
                     </div>
                     <div className="ops-panel-meta">
@@ -412,7 +412,7 @@ export default function OperationsDashboard({ user, onLogout }) {
                       />
                     </div>
                     <button type="submit" disabled={loading} className="btn-blue" style={{ width: '100%', marginTop: '6px' }}>
-                      {loading ? 'Querying APIs…' : 'Inspect Account'}
+                      {loading ? 'Retrieving account…' : 'View Account'}
                     </button>
                   </form>
 
@@ -455,7 +455,7 @@ export default function OperationsDashboard({ user, onLogout }) {
               <section className="ops-panel ops-table-panel">
                 <div className="ops-panel-title">
                   <div>
-                    <span className="card-kicker">Pending Transactions</span>
+                    <span className="card-kicker">Payment Activity</span>
                     <h2>Recent Payments for {selectedAccount}</h2>
                   </div>
                   <button type="button" className="btn-secondary" style={{ padding: '5px 12px', fontSize: '11px' }} onClick={() => setActive('payments')}>
@@ -553,7 +553,7 @@ function AccountWorkspace({
       <section className="ops-panel">
         <div className="ops-panel-title">
           <div>
-            <span className="card-kicker">Consumer Query</span>
+            <span className="card-kicker">Customer Accounts</span>
             <h2>Select or Search Account</h2>
           </div>
         </div>
@@ -574,7 +574,7 @@ function AccountWorkspace({
         </form>
 
         <div style={{ marginTop: '16px' }}>
-          <span className="card-kicker">Available Consumer Connections</span>
+          <span className="card-kicker">Registered Customer Accounts</span>
           <div className="customer-quick-picker">
             {customerAccounts.map((c) => (
               <button
@@ -650,7 +650,7 @@ function UsageWorkspace({ usage, usageHistory, selectedAccount, accountNumber, s
       <section className="ops-panel">
         <div className="ops-panel-title">
           <div>
-            <span className="card-kicker">Metering Service</span>
+            <span className="card-kicker">Water Consumption</span>
             <h2>Consumption Analysis for {selectedAccount}</h2>
           </div>
         </div>
@@ -709,7 +709,7 @@ function PaymentWorkspace({ payments, selectedAccount, onComplete, loadAccount }
     <section className="ops-panel">
       <div className="ops-panel-title">
         <div>
-          <span className="card-kicker">Payment Microservice</span>
+          <span className="card-kicker">Customer Payments</span>
           <h2>Payment Records & Clearance for {selectedAccount}</h2>
         </div>
         <button type="button" className="btn-secondary" style={{ padding: '6px 12px', fontSize: '11px' }} onClick={() => loadAccount(selectedAccount)}>
@@ -755,7 +755,7 @@ function ReadingWorkspace({ usageHistory, selectedAccount, reading, setReading, 
       <section className="ops-panel">
         <div className="ops-panel-title">
           <div>
-            <span className="card-kicker">Field Metering Service</span>
+            <span className="card-kicker">Meter Reading</span>
             <h2>Record Certified Meter Index</h2>
           </div>
           <StatusPill status="Staff / Admin Access" />
@@ -960,8 +960,8 @@ function SystemWorkspace({ isAdmin, user, healthStatus, healthLoading, onRefresh
       <section className="ops-panel">
         <div className="ops-panel-title">
           <div>
-            <span className="card-kicker">Microservices Architecture</span>
-            <h2>Real-Time System Connectivity & Probes</h2>
+            <span className="card-kicker">Service Availability</span>
+            <h2>Service Availability</h2>
           </div>
           <button
             type="button"
@@ -970,7 +970,7 @@ function SystemWorkspace({ isAdmin, user, healthStatus, healthLoading, onRefresh
             disabled={healthLoading}
             style={{ fontSize: '11px', padding: '5px 12px' }}
           >
-            {healthLoading ? 'Probing Services…' : 'Ping All Microservices'}
+            {healthLoading ? 'Checking services…' : 'Check Service Status'}
           </button>
         </div>
 
@@ -1002,18 +1002,18 @@ function SystemWorkspace({ isAdmin, user, healthStatus, healthLoading, onRefresh
       <section className="ops-panel">
         <div className="ops-panel-title">
           <div>
-            <span className="card-kicker">Security Context</span>
-            <h2>Current Operator Session Policy</h2>
+            <span className="card-kicker">Account Access</span>
+            <h2>Signed-in Account</h2>
           </div>
           <StatusPill status="JWT Authenticated" />
         </div>
         <div className="ops-detail-list">
           <div><span>Operator Identity</span><strong>{user.fullName} ({user.email})</strong></div>
           <div><span>Assigned Role</span><strong>{user.role}</strong></div>
-          <div><span>Authorization Mechanism</span><strong>JWT Bearer with Role Claims</strong></div>
+          <div><span>Access Level</span><strong>{isAdmin ? 'Administrator' : 'Staff Operator'}</strong></div>
           <div><span>Administrative Privileges</span><strong>{isAdmin ? 'Granted (Full Access)' : 'Standard Staff Operations'}</strong></div>
-          <div><span>Target Architecture</span><strong>.NET 10 Microservices + React Client</strong></div>
-          <div><span>Data Isolation</span><strong>Independent DB Stores (InMemory SOC Pattern)</strong></div>
+          <div><span>Service Access</span><strong>Customer, payment and water-service operations</strong></div>
+          <div><span>Session Status</span><strong>Secure and active</strong></div>
         </div>
       </section>
     </div>
@@ -1077,7 +1077,7 @@ function MeterTable({ rows }) {
       <table>
         <thead>
           <tr>
-            <th>Telemetry Reading</th>
+            <th>Meter Reading</th>
             <th>Timestamp (UTC)</th>
             <th>Status</th>
           </tr>
@@ -1088,7 +1088,7 @@ function MeterTable({ rows }) {
               <tr key={r.id}>
                 <td><strong>{r.cubicMetres} m³</strong></td>
                 <td>{new Date(r.readingDateUtc).toLocaleString()}</td>
-                <td><span className="status-pill status-completed">Verified Telemetry</span></td>
+                <td><span className="status-pill status-completed">Recorded</span></td>
               </tr>
             ))
           ) : (
