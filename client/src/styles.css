@@ -3354,3 +3354,117 @@ input[type="radio"] {
     grid-template-columns: 1fr 1fr;
   }
 }
+
+
+/* ==========================================================================
+   FINAL APPLICATION FLOW / UX CLEANUP
+   ========================================================================== */
+.auth-page {
+  min-height: 100svh;
+  width: 100%;
+  position: relative;
+  justify-content: center;
+  align-items: center;
+  padding: 32px 20px;
+}
+
+.auth-card {
+  margin: 0 auto;
+}
+
+.auth-back-home {
+  position: fixed;
+  top: 20px;
+  left: 24px;
+  z-index: 20;
+  background: rgba(255,255,255,.9);
+  color: var(--slate-800);
+  border: 1px solid var(--slate-200);
+  box-shadow: var(--shadow-sm);
+  padding: 9px 13px;
+  font-size: 12px;
+}
+
+.auth-back-home:hover {
+  background: #fff;
+  color: var(--blue-600);
+  border-color: var(--blue-100);
+}
+
+.ops-header-signout {
+  min-height: 38px;
+  padding: 7px 11px;
+  background: var(--slate-50);
+  color: var(--slate-700, #425e73);
+  border: 1px solid var(--slate-200);
+  box-shadow: none;
+  font-size: 11px;
+}
+
+.ops-header-signout:hover {
+  background: var(--ruby-50);
+  color: var(--ruby-700);
+  border-color: var(--ruby-100);
+  box-shadow: none;
+}
+
+.ops-header-signout .ops-icon {
+  width: 15px;
+  height: 15px;
+}
+
+@media (min-width: 769px) {
+  .ops-header-signout { display: none; }
+}
+
+@media (max-width: 768px) {
+  .auth-page {
+    padding: 68px 16px 28px;
+  }
+
+  .auth-back-home {
+    position: absolute;
+    top: 18px;
+    left: 16px;
+  }
+
+  .auth-card {
+    width: min(100%, 520px);
+    max-height: none;
+  }
+
+  .ops-header-user {
+    width: 100%;
+    justify-content: flex-end;
+    gap: 8px;
+  }
+
+  .ops-header-signout {
+    display: inline-flex;
+  }
+}
+
+@media (max-width: 480px) {
+  .auth-page {
+    padding: 66px 12px 22px;
+  }
+
+  .auth-card {
+    padding: 24px 18px 20px;
+  }
+
+  .auth-back-home {
+    left: 12px;
+    top: 14px;
+  }
+
+  .ops-header-signout span {
+    display: none;
+  }
+
+  .ops-header-signout {
+    width: 38px;
+    min-height: 38px;
+    padding: 8px;
+  }
+}
