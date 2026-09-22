@@ -167,7 +167,7 @@ export default function UsagePanel({ accountNumber, refreshTrigger }) {
                   <tbody>
                     {history.slice(0, 4).map((r) => (
                       <tr key={r.id}>
-                        <td>{new Date(r.readingDateUtc).toLocaleDateString(undefined, { dateStyle: 'long', timeStyle: 'short' })}</td>
+                        <td>{new Date(r.readingDateUtc).toLocaleString(undefined, { dateStyle: 'long', timeStyle: 'short' })}</td>
                         <td><strong>{r.cubicMetres} m³</strong></td>
                         <td><span className="status-pill status-completed">Verified Telemetry</span></td>
                       </tr>
