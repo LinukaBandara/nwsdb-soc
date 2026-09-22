@@ -5,9 +5,9 @@ const localApi = (envName, localUrl) => {
   return `${window.location.origin}/api/v1`;
 };
 
-const IDENTITY_API = localApi('VITE_IDENTITY_API', 'http://localhost:5021/api/v1');
-const PAYMENT_API = localApi('VITE_PAYMENT_API', 'http://localhost:5000/api/v1');
-const USAGE_API = localApi('VITE_USAGE_API', 'http://localhost:5010/api/v1');
+const IDENTITY_API = localApi('VITE_IDENTITY_API', 'https://identityservices-production.up.railway.app/api/v1');
+const PAYMENT_API = localApi('VITE_PAYMENT_API', 'https://paymentservices-production.up.railway.app/api/v1');
+const USAGE_API = localApi('VITE_USAGE_API', 'https://usageservices-production.up.railway.app/api/v1');
 
 export const authToken = () => localStorage.getItem('nwsdb_token');
 
