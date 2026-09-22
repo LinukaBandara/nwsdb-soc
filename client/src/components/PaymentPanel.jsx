@@ -5,7 +5,7 @@ const CHANNELS = [
   { id: 'NWSDB-Portal', name: 'NWSDB Direct Portal', desc: 'Instant Clearance / Credit Card' },
   { id: 'BankApp', name: 'Commercial Bank Digital', desc: 'Open ComBank Digital portal', url: 'https://www.combankdigital.com/' },
   { id: 'eZCash', name: 'eZ Cash Mobile', desc: 'Open official eZ Cash service', url: 'https://www.ezcash.lk/' },
-  { id: 'FrimiWallet', name: 'FriMi Digital', desc: 'Open official FriMi service', url: 'https://www.frimi.lk/' }
+  { id: 'PayHere', name: 'PayHere Sandbox', desc: 'Secure PayHere test checkout' }
 ];
 
 export default function PaymentPanel({ accountNumber, onPaymentSuccess }) {
@@ -45,17 +45,37 @@ export default function PaymentPanel({ accountNumber, onPaymentSuccess }) {
 
     const selectedChannel = CHANNELS.find((item) => item.id === channel);
 
-    if (selectedChannel?.url) {
-      window.open(selectedChannel.url, '_blank', 'noopener,noreferrer');
-      setStatus({
-        ok: true,
-        message: `Opening ${selectedChannel.name}. Complete the payment in the external portal, then return here to continue.`
-      });
-      return;
-    }
-
     setLoading(true);
     try {
+      if (channel === 'PayHere') {
+        const checkout = await PaymentApi.createPayHereCheckout(accountNumber, numericAmount);
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = checkout.actionUrl;
+        form.style.display = 'none';
+
+        Object.entries(checkout.fields).forEach(([name, value]) => {
+          const input = document.createElement('input');
+          input.type = 'hidden';
+          input.name = name;
+          input.value = value;
+          form.appendChild(input);
+        });
+
+        document.body.appendChild(form);
+        form.submit();
+        return;
+      }
+
+      if (selectedChannel?.url) {
+        window.open(selectedChannel.url, '_blank', 'noopener,noreferrer');
+        setStatus({
+          ok: true,
+          message: `Opening ${selectedChannel.name}. Complete the payment in the external portal, then return here to continue.`
+        });
+        return;
+      }
+
       const payment = await PaymentApi.create(accountNumber, numericAmount, channel);
       setStatus({
         ok: true,
@@ -160,7 +180,7 @@ export default function PaymentPanel({ accountNumber, onPaymentSuccess }) {
         )}
 
         <button type="submit" disabled={loading} className="btn-blue" style={{ minWidth: '180px' }}>
-          {loading ? 'Processing Transaction…' : CHANNELS.find((item) => item.id === channel)?.url ? `Open ${CHANNELS.find((item) => item.id === channel)?.name}` : `Pay Rs. ${amount ? Number(amount).toFixed(2) : '0.00'} Now`}
+          {loading ? 'Opening Secure Checkout…' : channel === 'PayHere' ? 'Continue to PayHere' : CHANNELS.find((item) => item.id === channel)?.url ? `Open ${CHANNELS.find((item) => item.id === channel)?.name}` : `Pay Rs. ${amount ? Number(amount).toFixed(2) : '0.00'} Now`}
         </button>
       </form>
 
