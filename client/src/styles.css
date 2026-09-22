@@ -2448,3 +2448,72 @@ tbody tr:hover {
   .ops-page-heading h1 { font-size: 27px; }
   .ops-page-heading p:last-child { font-size: 13px; }
 }
+
+
+/* Rich operational dashboard */
+.ops-service-summary {
+  margin-top: 18px;
+}
+
+.ops-service-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.ops-service-summary-card {
+  display: grid;
+  grid-template-columns: 38px 1fr auto;
+  align-items: center;
+  gap: 12px;
+  padding: 15px;
+  border: 1px solid #e2ebef;
+  border-radius: 11px;
+  background: linear-gradient(180deg,#fff,#fbfdfe);
+  transition: transform .16s ease, border-color .16s ease, box-shadow .16s ease;
+}
+
+.ops-service-summary-card:hover {
+  transform: translateY(-2px);
+  border-color: #cfe3ec;
+  box-shadow: 0 7px 20px rgba(7,47,80,.06);
+}
+
+.ops-service-summary-icon {
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  background: #edf8fd;
+  color: #0878bd;
+}
+
+.ops-service-summary-icon .ops-icon {
+  width: 18px;
+  height: 18px;
+}
+
+.ops-service-summary-card strong {
+  display: block;
+  color: #173b50;
+  font-size: 12px;
+  margin-bottom: 4px;
+}
+
+.ops-service-summary-card span {
+  display: block;
+  color: #8297a3;
+  font-size: 10px;
+  line-height: 1.45;
+}
+
+.ops-service-summary-card > .status-pill {
+  justify-self: end;
+}
+
+@media (max-width: 900px) {
+  .ops-service-summary-grid {
+    grid-template-columns: 1fr;
+  }
+}
