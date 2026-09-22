@@ -41,7 +41,7 @@ export default function Login({ onAuthenticated }) {
     <main className="auth-page">
       <section className="auth-card" aria-labelledby="auth-title">
         <div className="auth-national-crest">
-</div>
+        </div>
 
         <div className="auth-brand">
           <div className="brand-mark" aria-hidden="true">
@@ -52,12 +52,10 @@ export default function Login({ onAuthenticated }) {
           </div>
           <div>
             <strong>National Water Supply & Drainage Board</strong>
-            <span>Customer Service Portal</span>
           </div>
         </div>
 
         <div className="auth-heading">
-          <p className="eyebrow">Enterprise Access</p>
           <h1 id="auth-title">{mode === 'login' ? 'Sign in to your account' : 'Customer registration'}</h1>
           <p>
             {mode === 'login'
@@ -70,47 +68,20 @@ export default function Login({ onAuthenticated }) {
           {mode === 'register' && (
             <label>
               Full name
-              <input
-                type="text"
-                value={form.fullName}
-                onChange={update('fullName')}
-                placeholder="e.g. Priyantha Jayasuriya"
-                required
-              />
+              <input type="text" value={form.fullName} onChange={update('fullName')} placeholder="e.g. Priyantha Jayasuriya" required />
             </label>
           )}
 
           <label>
             Email address
-            <input
-              type="email"
-              value={form.email}
-              onChange={update('email')}
-              placeholder="e.g. admin@nwsdb.local or customer@example.com"
-              autoComplete="username"
-              required
-            />
+            <input type="email" value={form.email} onChange={update('email')} placeholder="e.g. admin@nwsdb.local or customer@example.com" autoComplete="username" required />
           </label>
 
           <label>
             Password
             <div className="input-with-action">
-              <input
-                type={showPassword ? 'text' : 'password'}
-                value={form.password}
-                onChange={update('password')}
-                placeholder="Account password (min 6 characters)"
-                autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
-                minLength="6"
-                required
-              />
-              <button
-                type="button"
-                className="input-action-btn"
-                onClick={() => setShowPassword(!showPassword)}
-                title={showPassword ? 'Hide password' : 'Show password'}
-                aria-label={showPassword ? 'Hide password' : 'Show password'}
-              >
+              <input type={showPassword ? 'text' : 'password'} value={form.password} onChange={update('password')} placeholder="Account password (min 6 characters)" autoComplete={mode === 'login' ? 'current-password' : 'new-password'} minLength="6" required />
+              <button type="button" className="input-action-btn" onClick={() => setShowPassword(!showPassword)} title={showPassword ? 'Hide password' : 'Show password'} aria-label={showPassword ? 'Hide password' : 'Show password'}>
                 {showPassword ? (
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
                 ) : (
@@ -123,13 +94,7 @@ export default function Login({ onAuthenticated }) {
           {mode === 'register' && (
             <label>
               NWSDB Account Number
-              <input
-                type="text"
-                value={form.accountNumber}
-                onChange={update('accountNumber')}
-                placeholder="e.g. NWSDB-0001"
-                required
-              />
+              <input type="text" value={form.accountNumber} onChange={update('accountNumber')} placeholder="e.g. NWSDB-0001" required />
             </label>
           )}
 
@@ -141,26 +106,13 @@ export default function Login({ onAuthenticated }) {
           )}
 
           <button type="submit" disabled={loading}>
-            {loading ? (
-              <span>Authenticating…</span>
-            ) : mode === 'login' ? (
-              <span>Sign in to NWSDB</span>
-            ) : (
-              <span>Create Customer Account</span>
-            )}
+            {loading ? <span>Authenticating…</span> : mode === 'login' ? <span>Sign in to NWSDB</span> : <span>Create Customer Account</span>}
           </button>
         </form>
 
         <div className="auth-switch">
           <span>{mode === 'login' ? "New customer with a water connection?" : "Already registered?"}</span>
-          <button
-            type="button"
-            className="link-button"
-            onClick={() => {
-              setMode(mode === 'login' ? 'register' : 'login');
-              setError('');
-            }}
-          >
+          <button type="button" className="link-button" onClick={() => { setMode(mode === 'login' ? 'register' : 'login'); setError(''); }}>
             {mode === 'login' ? 'Register account' : 'Sign in'}
           </button>
         </div>
