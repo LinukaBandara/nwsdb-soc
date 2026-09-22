@@ -56,9 +56,6 @@ export default function OperationsDashboard({ user, onLogout }) {
   const [healthLoading, setHealthLoading] = useState(false);
 
   const isAdmin = user.role === 'Admin';
-  const onlineServices = healthStatus.filter((service) => service.ok).length;
-  const healthLabel = healthStatus.length ? `${onlineServices}/${healthStatus.length} Services Online` : 'Checking Services';
-
   const runHealthCheck = async () => {
     setHealthLoading(true);
     try {
@@ -182,7 +179,7 @@ export default function OperationsDashboard({ user, onLogout }) {
       email: u.email
     }));
     if (!list.some((c) => c.accountNumber === 'NWSDB-0001')) {
-      list.unshift({ accountNumber: 'NWSDB-0001', name: 'Primary Demo Customer', email: 'customer@nwsdb.local' });
+      list.unshift({ accountNumber: 'NWSDB-0001', name: 'Primary Customer', email: 'customer@nwsdb.local' });
     }
     return list;
   }, [users]);
@@ -282,10 +279,6 @@ export default function OperationsDashboard({ user, onLogout }) {
               <p>{subtitle}</p>
             </div>
             <div className="ops-page-actions">
-              <div className="ops-live-status">
-                <span className="live-dot" />
-                {healthLabel}
-              </div>
               {lastUpdated && (
                 <span className="ops-updated">
                   Synced {lastUpdated.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
