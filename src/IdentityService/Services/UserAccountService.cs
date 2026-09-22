@@ -26,8 +26,8 @@ public class UserAccountService : IUserAccountService
         AddSeedUser(3, "NWSDB Partner", "partner@nwsdb.local", "Partner", null, "Partner@123");
     }
 
-    public UserAccount? FindByEmail(string email) =>
-        _users.TryGetValue(email.Trim(), out var user) ? user : null;
+    public UserAccount? FindByEmail(string? email) =>
+        !string.IsNullOrWhiteSpace(email) && _users.TryGetValue(email.Trim(), out var user) ? user : null;
 
     public UserAccount CreateCustomer(RegisterRequest request)
     {
