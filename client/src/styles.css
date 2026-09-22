@@ -2611,3 +2611,169 @@ tbody tr:hover {
 .ops-sidebar-bottom .ops-signout .ops-icon {
   margin: 0 auto;
 }
+
+
+/* ==========================================================================
+   Public customer-facing experience
+   ========================================================================== */
+.public-site{min-height:100vh;background:#f8fbfd;color:#09253b;overflow:hidden}
+.public-header{height:76px;display:flex;align-items:center;justify-content:space-between;padding:0 clamp(22px,5vw,78px);background:rgba(255,255,255,.92);border-bottom:1px solid rgba(12,54,82,.08);position:sticky;top:0;z-index:50;backdrop-filter:blur(18px)}
+.public-brand{display:flex;align-items:center;gap:11px;text-decoration:none;color:inherit}
+.public-brand-mark{display:grid;place-items:center;width:42px;height:42px;border-radius:12px;background:#073b61;box-shadow:0 8px 20px rgba(7,59,97,.18)}
+.public-water-mark{display:grid;place-items:center;width:100%;height:100%}
+.public-water-mark svg{width:25px;height:25px;fill:#fff}
+.public-water-mark svg path+path{fill:none;stroke:#39b9e8;stroke-width:1.7;stroke-linecap:round}
+.public-brand strong{display:block;font-size:13px;letter-spacing:-.01em}
+.public-brand small{display:block;color:#718899;font-size:10px;margin-top:2px}
+.public-nav{display:flex;align-items:center;gap:27px}
+.public-nav a,.public-footer-links a{font-size:12px;font-weight:700;color:#526c7e;text-decoration:none;transition:.18s}
+.public-nav a:hover,.public-footer-links a:hover{color:#0878bd}
+.public-nav button{border:0;box-shadow:none}
+.public-nav-login{background:transparent;color:#173d56;padding:9px 4px}
+.public-nav-login:hover{background:transparent;color:#0878bd;box-shadow:none}
+.public-nav-register{padding:10px 15px;background:#073b61}
+.public-nav-register svg,.public-primary svg,.public-service-grid a svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2}
+.public-menu{display:none;background:transparent!important;color:#073b61!important;box-shadow:none!important;padding:8px}
+.public-menu span{display:block;width:22px;height:2px;background:#073b61;margin:4px}
+.public-hero{position:relative;background:linear-gradient(135deg,#f9fcfe 0%,#edf8fc 55%,#e1f3fa 100%);min-height:690px}
+.public-hero-grid{max-width:1240px;margin:auto;min-height:630px;padding:86px 40px 100px;display:grid;grid-template-columns:1.02fr .98fr;align-items:center;gap:35px}
+.public-live-pill{display:inline-flex;align-items:center;gap:8px;padding:7px 11px;border:1px solid #cfe6ef;background:rgba(255,255,255,.72);border-radius:999px;color:#3d6378;font-size:10px;font-weight:750;margin-bottom:25px}
+.public-live-dot{width:7px;height:7px;border-radius:50%;background:#16834b;box-shadow:0 0 0 4px #dff4e8}
+.public-overline{text-transform:uppercase;letter-spacing:.13em;font-size:10px;font-weight:800;color:#0878bd;margin-bottom:10px}
+.public-hero h1{font-size:clamp(44px,5.4vw,72px);line-height:1.02;letter-spacing:-.055em;max-width:700px;color:#06243b}
+.public-hero h1 em{font-style:normal;color:#0878bd}
+.public-hero-lead{max-width:600px;font-size:16px;line-height:1.75;color:#5c7484;margin-top:22px}
+.public-hero-actions{display:flex;gap:11px;align-items:center;margin-top:31px}
+.public-primary,.public-secondary{min-height:45px;padding:12px 18px}
+.public-primary{background:#0878bd;color:#fff;border-color:#0878bd}
+.public-primary:hover{background:#06699f}
+.public-secondary{background:#fff;color:#173d56;border-color:#d5e3ea}
+.public-secondary:hover{background:#f4f9fb;color:#0878bd}
+.public-trust-row{display:flex;gap:25px;margin-top:35px;padding-top:19px;border-top:1px solid #d7e8ef;max-width:620px}
+.public-trust-row span{font-size:10px;color:#728796;display:flex;gap:7px;align-items:center}
+.public-trust-row b{color:#0878bd;font-size:9px}
+.public-hero-visual{position:relative;min-height:500px;display:grid;place-items:center}
+.public-orbit{position:absolute;border:1px solid rgba(8,120,189,.11);border-radius:50%}
+.orbit-one{width:450px;height:450px}
+.orbit-two{width:560px;height:300px;transform:rotate(-18deg)}
+.public-water-card{position:relative;width:min(390px,82%);min-height:410px;border-radius:25px;padding:24px;background:linear-gradient(155deg,#083b61,#05233b);color:#fff;box-shadow:0 32px 70px rgba(4,43,69,.24);z-index:2;overflow:hidden}
+.public-water-card:before{content:"";position:absolute;width:240px;height:240px;border-radius:50%;right:-110px;top:-90px;background:rgba(40,180,224,.15)}
+.public-card-top{display:flex;justify-content:space-between;align-items:center}
+.public-mini-brand{width:35px;height:35px;border-radius:10px;display:block;background:#0a547f}
+.public-mini-brand .public-water-mark svg{width:20px;height:20px}
+.public-card-status{font-size:9px;color:#b8d4df;background:rgba(255,255,255,.08);padding:6px 9px;border-radius:20px}
+.public-card-status i{display:inline-block;width:5px;height:5px;background:#42cf83;border-radius:50%;margin-right:5px}
+.public-card-label{font-size:10px;color:#91b2c3;margin-top:46px}
+.public-card-number{font-size:27px;font-weight:700;letter-spacing:.03em;margin-top:5px}
+.public-card-divider{height:1px;background:rgba(255,255,255,.12);margin:23px 0}
+.public-card-stats{display:grid;grid-template-columns:1fr 1fr;gap:15px}
+.public-card-stats span,.public-card-footer span{display:block;color:#91b2c3;font-size:9px;margin-bottom:5px}
+.public-card-stats strong{font-size:17px}
+.public-card-stats small{font-size:9px;color:#8eb1c1}
+.public-card-chart{height:82px;margin:22px 0 13px;display:flex;align-items:flex-end;gap:7px;position:relative}
+.public-card-chart span{width:9%;border-radius:5px 5px 2px 2px;background:linear-gradient(#39b9e8,#0878bd);opacity:.7}
+.public-chart-line{position:absolute;left:0;right:0;top:26px;height:2px;background:#8ee2f4;transform:skewY(-5deg);opacity:.8}
+.public-card-footer{border-top:1px solid rgba(255,255,255,.1);padding-top:13px;display:flex;justify-content:space-between}
+.public-card-footer strong{font-size:9px}
+.public-float-card{position:absolute;z-index:4;display:flex;align-items:center;gap:10px;padding:11px 13px;border:1px solid #dcebf1;border-radius:13px;background:rgba(255,255,255,.94);box-shadow:0 15px 35px rgba(7,47,80,.13);min-width:150px}
+.public-float-card small,.public-float-card strong{display:block}
+.public-float-card small{font-size:8px;color:#79909f}
+.public-float-card strong{font-size:10px;color:#173d56;margin-top:2px}
+.public-float-payment{left:1%;bottom:65px}
+.public-float-secure{right:0;top:82px}
+.public-float-icon,.public-shield{display:grid;place-items:center;width:28px;height:28px;border-radius:9px;background:#e8f8ef;color:#16834b;font-weight:800}
+.public-shield{background:#e4f4fc;color:#0878bd}
+.public-wave{position:absolute;bottom:-1px;left:0;width:100%;height:70px}
+.public-wave svg{width:100%;height:100%;fill:#f8fbfd}
+.public-section{max-width:1180px;margin:auto;padding:105px 30px}
+.public-section-heading{display:flex;justify-content:space-between;gap:50px;align-items:end;margin-bottom:40px}
+.public-section-heading h2,.public-process h2,.public-help h2{font-size:clamp(31px,4vw,46px);line-height:1.08;letter-spacing:-.04em;color:#092b42;max-width:650px}
+.public-section-heading>p{max-width:310px;color:#718695;font-size:13px;line-height:1.7}
+.public-service-grid{display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid #dce9ef;border-bottom:1px solid #dce9ef}
+.public-service-grid article{position:relative;padding:31px 28px 34px;min-height:290px;border-right:1px solid #dce9ef}
+.public-service-grid article:last-child{border-right:0}
+.public-service-number{position:absolute;right:25px;top:27px;color:#aac1cd;font-size:10px;font-weight:800}
+.public-service-icon{width:45px;height:45px;display:grid;place-items:center;border-radius:13px;background:#e8f5fa;color:#0878bd;font-size:19px;font-weight:800;margin-bottom:28px}
+.public-service-grid h3{font-size:18px;color:#092b42;margin-bottom:10px}
+.public-service-grid p{font-size:12px;line-height:1.75;color:#718695;max-width:300px}
+.public-service-grid a{display:inline-flex;align-items:center;gap:7px;color:#0878bd;font-size:11px;font-weight:800;text-decoration:none;margin-top:20px}
+.public-process{background:#062b45;color:#fff}
+.public-process-inner{max-width:1180px;margin:auto;padding:105px 30px;display:grid;grid-template-columns:.9fr 1.1fr;gap:100px}
+.public-process .public-overline{color:#47bde8}
+.public-process h2{color:#fff}
+.public-process-copy>p:not(.public-overline){color:#9eb9c7;line-height:1.75;font-size:13px;max-width:470px;margin:20px 0 28px}
+.public-steps{border-top:1px solid rgba(255,255,255,.14)}
+.public-steps>div{display:grid;grid-template-columns:50px 1fr;gap:18px;padding:23px 0;border-bottom:1px solid rgba(255,255,255,.14)}
+.public-steps b{font-size:10px;color:#43bce7;padding-top:2px}
+.public-steps strong{display:block;font-size:15px}
+.public-steps small{display:block;color:#9eb9c7;font-size:11px;line-height:1.6;margin-top:5px}
+.public-help{max-width:1180px;margin:auto;padding:95px 30px}
+.public-help-box{padding:38px 42px;border:1px solid #d7e8ef;background:#fff;border-radius:22px;display:flex;justify-content:space-between;align-items:center;gap:30px;box-shadow:0 15px 45px rgba(7,47,80,.06)}
+.public-help-box>div:first-child{display:flex;gap:17px;align-items:flex-start}
+.public-help-icon{display:grid;place-items:center;width:42px;height:42px;border-radius:12px;background:#e6f5fb;color:#0878bd;font-weight:800}
+.public-help h2{font-size:26px}
+.public-help h2+p{font-size:12px;color:#718695;margin-top:8px}
+.public-help-actions{display:flex;gap:9px}
+.public-footer{background:#041f33;color:#fff;padding:42px clamp(30px,6vw,85px) 22px}
+.public-footer-brand{display:flex;gap:11px;align-items:center}
+.public-footer-brand .public-brand-mark{background:#0a456b}
+.public-footer-brand strong{display:block;font-size:12px}
+.public-footer-brand small{display:block;color:#7895a6;font-size:9px;margin-top:3px}
+.public-footer-links{display:flex;gap:25px;margin-top:-27px;justify-content:flex-end}
+.public-footer-links a,.public-footer-links button{color:#9bb3c0;background:none;border:0;padding:0;font-size:10px;box-shadow:none}
+.public-footer-bottom{border-top:1px solid rgba(255,255,255,.1);margin-top:35px;padding-top:17px;display:flex;justify-content:space-between;color:#718b99;font-size:9px}
+
+/* Auth navigation */
+.auth-back-button{position:fixed;top:22px;left:25px;z-index:10;background:rgba(255,255,255,.88);color:#173d56;border:1px solid #d8e5ee;box-shadow:0 8px 24px rgba(7,47,80,.08);padding:8px 12px;font-size:11px}
+.auth-back-button:hover{background:#fff;color:#0878bd}
+
+@media (max-width: 900px){
+  .public-nav{gap:15px}
+  .public-hero-grid{grid-template-columns:1fr;padding-top:65px}
+  .public-hero-copy{text-align:center}
+  .public-hero-lead{margin-left:auto;margin-right:auto}
+  .public-hero-actions,.public-trust-row{justify-content:center}
+  .public-hero-visual{min-height:440px}
+  .public-section-heading{display:block}
+  .public-section-heading>p{margin-top:15px}
+  .public-process-inner{grid-template-columns:1fr;gap:50px}
+}
+@media (max-width: 700px){
+  .public-header{height:68px;padding:0 17px}
+  .public-brand strong{font-size:11px}
+  .public-brand small{font-size:8px}
+  .public-brand-mark{width:36px;height:36px}
+  .public-menu{display:block}
+  .public-nav{display:none;position:absolute;left:10px;right:10px;top:62px;padding:13px;background:#fff;border:1px solid #dce9ef;border-radius:15px;box-shadow:0 18px 40px rgba(7,47,80,.12);flex-direction:column;align-items:stretch;gap:2px}
+  .public-nav.is-open{display:flex}
+  .public-nav a,.public-nav button{width:100%;text-align:left;padding:12px 13px}
+  .public-nav-register{text-align:center!important}
+  .public-hero{min-height:auto}
+  .public-hero-grid{padding:54px 20px 70px;min-height:0}
+  .public-hero h1{font-size:43px}
+  .public-hero-lead{font-size:13px}
+  .public-hero-actions{flex-direction:column}
+  .public-hero-actions button{width:100%}
+  .public-trust-row{display:grid;grid-template-columns:1fr;gap:9px;text-align:left;margin-top:25px}
+  .public-hero-visual{min-height:390px}
+  .public-water-card{width:84%;min-height:365px;padding:20px}
+  .public-card-number{font-size:22px}
+  .orbit-one{width:330px;height:330px}
+  .orbit-two{width:380px;height:230px}
+  .public-float-payment{left:0;bottom:35px}
+  .public-float-secure{right:-3px;top:42px}
+  .public-section{padding:75px 20px}
+  .public-section-heading h2,.public-process h2{font-size:32px}
+  .public-service-grid{grid-template-columns:1fr}
+  .public-service-grid article{border-right:0;border-bottom:1px solid #dce9ef;min-height:0}
+  .public-service-grid article:last-child{border-bottom:0}
+  .public-process-inner{padding:75px 20px}
+  .public-help{padding:65px 20px}
+  .public-help-box{padding:26px;display:block}
+  .public-help-actions{margin-top:24px}
+  .public-help-actions button{flex:1}
+  .public-footer{padding:35px 20px 20px}
+  .public-footer-links{justify-content:flex-start;margin-top:27px;flex-wrap:wrap}
+  .public-footer-bottom{display:block;line-height:1.7}
+  .public-footer-bottom span{display:block}
+}
