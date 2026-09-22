@@ -44,12 +44,15 @@ public class AuthController(
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public ActionResult<AuthResponse> Login(LoginRequest request)
     {
-        if (string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrWhiteSpace(request.Password))
+        var email = request.Email?.Trim();
+        var password = request.Password;
+
+        if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
             return BadRequest("Email and password are required.");
 
-        var user = users.FindByEmail(request.Email);
+        var user = users.FindByEmail(email);
 
-        if (user is null || !users.VerifyPassword(user, request.Password))
+        if (user is null || !users.VerifyPassword(user, password))
             return Unauthorized("Invalid email or password.");
 
         return Ok(CreateResponse(user));
