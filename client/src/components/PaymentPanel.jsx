@@ -174,41 +174,43 @@ export default function PaymentPanel({ accountNumber, onPaymentSuccess }) {
       {/* Printable Digital Receipt Card */}
       {activeReceipt && (
         <div className="receipt-drawer">
-          <div className="receipt-header">
-            <strong>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-              Official Electronic Receipt Generated
-            </strong>
-            <button
-              type="button"
-              className="btn-secondary"
-              style={{ padding: '4px 10px', fontSize: '11px' }}
-              onClick={() => window.print()}
-            >
-              Print Receipt
-            </button>
-          </div>
-          <div className="receipt-grid">
-            <div>
-              <span>Reference Number</span>
-              <strong>{activeReceipt.referenceNumber}</strong>
+          <div className="receipt-paper" id="printable-receipt">
+            <div className="receipt-header">
+              <div className="receipt-branding">
+                <div className="receipt-logo">N</div>
+                <div>
+                  <strong>NATIONAL WATER SUPPLY & DRAINAGE BOARD</strong>
+                  <span>Customer Services · Electronic Payment Receipt</span>
+                </div>
+              </div>
+              <div className="receipt-actions">
+                <button type="button" className="btn-secondary receipt-print-button" onClick={() => window.print()}>
+                  Print Receipt
+                </button>
+                <button type="button" className="receipt-close-button" onClick={() => setActiveReceipt(null)} aria-label="Close receipt">
+                  ×
+                </button>
+              </div>
             </div>
-            <div>
+            <div className="receipt-title-row">
+              <div>
+                <span>PAYMENT RECEIPT</span>
+                <strong>{activeReceipt.referenceNumber}</strong>
+              </div>
+              <span className="receipt-paid-badge">{String(activeReceipt.status || '').toUpperCase()}</span>
+            </div>
+            <div className="receipt-grid">
+              <div><span>Account Number</span><strong>{activeReceipt.accountNumber || accountNumber}</strong></div>
+              <div><span>Payment Date</span><strong>{activeReceipt.createdAtUtc ? new Date(activeReceipt.createdAtUtc).toLocaleString() : new Date().toLocaleString()}</strong></div>
+              <div><span>Payment Channel</span><strong>{activeReceipt.channel}</strong></div>
+              <div><span>Status</span><strong>{activeReceipt.status}</strong></div>
+            </div>
+            <div className="receipt-total">
               <span>Amount Paid</span>
-              <strong style={{ color: 'var(--emerald-700)' }}>
-                Rs. {Number(activeReceipt.amount).toFixed(2)}
-              </strong>
+              <strong>Rs. {Number(activeReceipt.amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong>
             </div>
-            <div>
-              <span>Payment Channel</span>
-              <strong>{activeReceipt.channel}</strong>
-            </div>
-            <div>
-              <span>Status</span>
-              <strong><span className={`status-pill status-${activeReceipt.status.toLowerCase()}`}>{activeReceipt.status}</span></strong>
-            </div>
-          </div>
-        </div>
+            <p className="receipt-note">This electronic receipt confirms that the payment was recorded by the NWSDB Customer Services system.</p>
+          </div>        </div>
       )}
 
       {/* Payment History Section */}
