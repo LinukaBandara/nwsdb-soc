@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { AuthApi } from '../api/nwsdbApi';
 
-export default function Login({ onAuthenticated }) {
-  const [mode, setMode] = useState('login');
+export default function Login({ onAuthenticated, onBack, initialMode = 'login' }) {
+  const [mode, setMode] = useState(initialMode);
   const [form, setForm] = useState({ fullName: '', email: '', password: '', accountNumber: '' });
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
@@ -39,6 +39,7 @@ export default function Login({ onAuthenticated }) {
 
   return (
     <main className="auth-page">
+      {onBack && <button type="button" className="auth-back-button" onClick={onBack} aria-label="Back to NWSDB home">← Back to NWSDB Home</button>}
       <section className="auth-card" aria-labelledby="auth-title">
         <div className="auth-national-crest">
 </div>
