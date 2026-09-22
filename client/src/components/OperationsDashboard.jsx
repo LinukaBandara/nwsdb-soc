@@ -339,7 +339,7 @@ export default function OperationsDashboard({ user, onLogout }) {
                     <span className="kpi-icon">Rs</span>
                   </div>
                   <strong style={{ color: 'var(--blue-600)' }}>
-                    {usage ? `Rs. ${Number(usage.estimatedBill).toFixed(2)}` : '—'}
+                    {usage ? `Rs. ${Number(usage.estimatedBill).toFixed(2)}` : 'N/A'}
                   </strong>
                   <small>{usage ? `${usage.unitsConsumed} m³ consumed` : 'Load an account'}</small>
                 </div>
@@ -617,13 +617,13 @@ function AccountWorkspace({
           <div className="ops-kpi-grid">
             <div className="ops-kpi">
               <div className="ops-kpi-top"><span>Current Consumption</span></div>
-              <strong>{usage ? `${usage.unitsConsumed} m³` : '—'}</strong>
+              <strong>{usage ? `${usage.unitsConsumed} m³` : 'N/A'}</strong>
               <small>Units this period</small>
             </div>
             <div className="ops-kpi">
               <div className="ops-kpi-top"><span>Current Bill</span></div>
               <strong style={{ color: 'var(--blue-600)' }}>
-                {usage ? `Rs. ${Number(usage.estimatedBill).toFixed(2)}` : '—'}
+                {usage ? `Rs. ${Number(usage.estimatedBill).toFixed(2)}` : 'N/A'}
               </strong>
               <small>Domestic tariff calculated</small>
             </div>
@@ -962,7 +962,7 @@ function UserWorkspace({ users, newUser, setNewUser, createUser }) {
                     <div style={{ fontSize: '11px', color: 'var(--slate-400)' }}>{u.email}</div>
                   </td>
                   <td><StatusPill status={u.role} /></td>
-                  <td>{u.accountNumber || '—'}</td>
+                  <td>{u.accountNumber || 'N/A'}</td>
                 </tr>
               ))}
             </tbody>
