@@ -1,9 +1,20 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { PaymentApi, UsageApi, AuthApi } from '../api/nwsdbApi';
+import { PaymentApi, UsageApi, AuthApi, HealthApi } from '../api/nwsdbApi';
 
 function StatusPill({ status }) {
-  const slug = String(status).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-  return <span className={`status-pill status-${slug}`}><i aria-hidden="true" />{status}</span>;
+  const s = String(status || '').toLowerCase();
+  let variant = 'customer';
+  if (s.includes('completed') || s.includes('operational') || s.includes('healthy') || s.includes('active')) variant = 'completed';
+  else if (s.includes('pending') || s.includes('processing')) variant = 'pending';
+  else if (s.includes('failed') || s.includes('offline') || s.includes('unreachable') || s.includes('error')) variant = 'failed';
+  else if (s.includes('admin')) variant = 'admin-only';
+
+  return (
+    <span className={`status-pill status-${variant}`}>
+      <i aria-hidden="true" />
+      {status}
+    </span>
+  );
 }
 
 function Icon({ name }) {
@@ -16,15 +27,21 @@ function Icon({ name }) {
     shield: 'M12 3 20 6v5c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6l8-3Z',
     settings: 'M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Zm0-12v2m0 13v2m9-8h-2M5 12H3m15.36-6.36-1.42 1.42M7.06 16.94l-1.42 1.42m12.72 0-1.42-1.42M7.06 7.06 5.64 5.64',
     logout: 'M10 17l5-5-5-5m5 5H3m13-7V3a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v3m12 12v3a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-3',
-    search: 'm21 21-4.35-4.35M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z'
+    search: 'm21 21-4.35-4.35M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z',
+    refresh: 'M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67',
+    check: 'M20 6 9 17l-5-5'
   };
-  return <svg className="ops-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d={paths[name]} /></svg>;
+  return (
+    <svg className="ops-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+      <path d={paths[name] || paths.grid} />
+    </svg>
+  );
 }
 
 export default function OperationsDashboard({ user, onLogout }) {
   const [active, setActive] = useState('dashboard');
   const [accountNumber, setAccountNumber] = useState('NWSDB-0001');
-  const [selectedAccount, setSelectedAccount] = useState('');
+  const [selectedAccount, setSelectedAccount] = useState('NWSDB-0001');
   const [usage, setUsage] = useState(null);
   const [usageHistory, setUsageHistory] = useState([]);
   const [payments, setPayments] = useState([]);
@@ -35,225 +52,1052 @@ export default function OperationsDashboard({ user, onLogout }) {
   const [users, setUsers] = useState([]);
   const [newUser, setNewUser] = useState({ fullName: '', email: '', password: '', role: 'Staff', accountNumber: '' });
   const [lastUpdated, setLastUpdated] = useState(null);
+  const [healthStatus, setHealthStatus] = useState([]);
+  const [healthLoading, setHealthLoading] = useState(false);
 
   const isAdmin = user.role === 'Admin';
 
+  const runHealthCheck = async () => {
+    setHealthLoading(true);
+    try {
+      const results = await HealthApi.checkAll();
+      setHealthStatus(results);
+    } catch {
+      // ignore
+    } finally {
+      setHealthLoading(false);
+    }
+  };
+
   const loadAccount = async (account = accountNumber) => {
-    const value = account.trim();
+    const value = (account || '').trim();
     if (!value) return;
-    setLoading(true); setError(''); setMessage('');
+    setLoading(true);
+    setError('');
+    setMessage('');
     try {
       const results = await Promise.allSettled([
-        UsageApi.latest(value), UsageApi.history(value), PaymentApi.historyForAccount(value)
+        UsageApi.latest(value),
+        UsageApi.history(value),
+        PaymentApi.historyForAccount(value)
       ]);
       const [latestResult, historyResult, paymentsResult] = results;
       const latest = latestResult.status === 'fulfilled' ? latestResult.value : null;
-      const history = historyResult.status === 'fulfilled' ? historyResult.value : [];
-      const paymentHistory = paymentsResult.status === 'fulfilled' ? paymentsResult.value : [];
+      const history = historyResult.status === 'fulfilled' ? (historyResult.value || []) : [];
+      const paymentHistory = paymentsResult.status === 'fulfilled' ? (paymentsResult.value || []) : [];
+
       setSelectedAccount(value);
       setUsage(latest);
       setUsageHistory(history);
       setPayments(paymentHistory);
       setLastUpdated(new Date());
-      const failures = results.filter(result => result.status === 'rejected');
-      if (failures.length === results.length) throw failures[0].reason;
-      if (failures.length) setMessage('Account loaded. Some service data is currently unavailable.');
+
+      const failures = results.filter((r) => r.status === 'rejected');
+      if (failures.length === results.length) {
+        throw new Error(failures[0].reason?.message || 'Failed to connect to microservices.');
+      }
+      if (failures.length > 0) {
+        setMessage(`Account ${value} partially loaded. Some microservice telemetry unavailable.`);
+      }
     } catch (e) {
-      setError(e.message);
-      setUsage(null); setUsageHistory([]); setPayments([]);
-    } finally { setLoading(false); }
+      setError(e.message || 'Error loading account data.');
+      setUsage(null);
+      setUsageHistory([]);
+      setPayments([]);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const loadUsers = async () => {
-    if (!isAdmin) return;
-    try { setUsers(await AuthApi.users()); } catch (e) { setError(e.message); }
+    try {
+      const list = await AuthApi.users();
+      setUsers(list || []);
+    } catch (e) {
+      if (isAdmin) setError(e.message || 'Unable to retrieve user directory.');
+    }
   };
 
-  useEffect(() => { loadUsers(); loadAccount('NWSDB-0001'); }, [isAdmin]);
+  useEffect(() => {
+    loadUsers();
+    loadAccount('NWSDB-0001');
+    runHealthCheck();
+  }, [isAdmin]);
 
   const recordReading = async (e) => {
     e.preventDefault();
     if (!reading || !selectedAccount) return;
-    setError(''); setMessage('');
+    setError('');
+    setMessage('');
     try {
-      await UsageApi.record(selectedAccount, reading);
+      const res = await UsageApi.record(selectedAccount, reading);
       setReading('');
-      setMessage('Meter reading recorded successfully.');
+      setMessage(`Meter reading ${res.cubicMetres} m³ recorded successfully.`);
       await loadAccount(selectedAccount);
-    } catch (e) { setError(e.message); }
+    } catch (e) {
+      setError(e.message || 'Error recording meter reading.');
+    }
   };
 
   const updatePaymentStatus = async (id, status) => {
-    setError(''); setMessage('');
+    setError('');
+    setMessage('');
     try {
       await PaymentApi.updateStatus(id, status);
-      setMessage(`Payment #${id} updated to ${status}.`);
+      setMessage(`Payment #${id} has been marked as ${status}.`);
       await loadAccount(selectedAccount);
-    } catch (e) { setError(e.message); }
+    } catch (e) {
+      setError(e.message || 'Failed to update payment status.');
+    }
   };
 
   const createUser = async (e) => {
     e.preventDefault();
-    setError(''); setMessage('');
+    setError('');
+    setMessage('');
     try {
       await AuthApi.createUser(newUser);
       setNewUser({ fullName: '', email: '', password: '', role: 'Staff', accountNumber: '' });
-      setMessage('User created successfully.');
+      setMessage(`User account ${newUser.email} created successfully.`);
       await loadUsers();
-    } catch (e) { setError(e.message); }
+    } catch (e) {
+      setError(e.message || 'Failed to create user account.');
+    }
   };
 
-  const pendingPayments = payments.filter(p => p.status === 'Pending').length;
-  const completedPayments = payments.filter(p => p.status === 'Completed').length;
+  const pendingPayments = payments.filter((p) => p.status === 'Pending').length;
+  const completedPayments = payments.filter((p) => p.status === 'Completed').length;
   const avgUsage = useMemo(() => {
-    if (!usageHistory.length) return 0;
-    return (usageHistory.reduce((sum, r) => sum + Number(r.cubicMetres || 0), 0) / usageHistory.length).toFixed(1);
+    if (!usageHistory.length) return '0.0';
+    const sum = usageHistory.reduce((acc, r) => acc + Number(r.cubicMetres || 0), 0);
+    return (sum / usageHistory.length).toFixed(1);
   }, [usageHistory]);
 
+  const customerAccounts = useMemo(() => {
+    const list = users.filter((u) => u.accountNumber).map((u) => ({
+      accountNumber: u.accountNumber,
+      name: u.fullName,
+      email: u.email
+    }));
+    if (!list.some((c) => c.accountNumber === 'NWSDB-0001')) {
+      list.unshift({ accountNumber: 'NWSDB-0001', name: 'Primary Demo Customer', email: 'customer@nwsdb.local' });
+    }
+    return list;
+  }, [users]);
+
   const nav = [
-    ['dashboard', 'Dashboard', 'grid'],
-    ['customers', 'Customers', 'users'],
-    ['usage', 'Usage & Metering', 'water'],
-    ['payments', 'Payments', 'card'],
-    ['readings', 'Meter Readings', 'meter'],
-    ...(isAdmin ? [['users', 'User Management', 'shield']] : []),
-    ['settings', 'System & API', 'settings']
+    ['dashboard', 'Overview', 'grid'],
+    ['customers', 'Customer Workspace', 'users'],
+    ['usage', 'Usage & Telemetry', 'water'],
+    ['payments', 'Payment Processing', 'card'],
+    ['readings', 'Record Readings', 'meter'],
+    ...(isAdmin ? [['users', 'User Directory', 'shield']] : []),
+    ['settings', 'Microservices & Health', 'settings']
   ];
 
   const title = {
-    dashboard: 'Operations overview',
-    customers: 'Customer operations',
-    usage: 'Usage & metering',
-    payments: 'Payment operations',
-    readings: 'Meter readings',
-    users: 'User management',
-    settings: 'System & API status'
+    dashboard: 'Operations & Service Overview',
+    customers: 'Customer Account Intelligence',
+    usage: 'Meter Usage & Tariff Analytics',
+    payments: 'Payment Processing & Approvals',
+    readings: 'Meter Reading Field Entry',
+    users: 'Enterprise User Management',
+    settings: 'Microservice Health & Gateway Architecture'
   }[active];
 
   const subtitle = {
-    dashboard: 'Monitor customer service activity across the protected NWSDB service layer.',
-    customers: 'Look up an account and review its service activity.',
-    usage: 'Review consumption, estimated billing and historical meter activity.',
-    payments: 'Review transactions and process pending payments.',
-    readings: 'Record and review meter readings for customer accounts.',
-    users: 'Create and review system accounts and role assignments.',
-    settings: 'Review the service architecture and access controls used by this dashboard.'
+    dashboard: 'Real-time telemetry and transaction clearance across NWSDB microservices.',
+    customers: 'Detailed consumer lookup, billing history, and connection diagnostics.',
+    usage: 'Historical volumetric consumption patterns and block-rate tariff evaluation.',
+    payments: 'Clear pending transactions, inspect receipts, and reconcile payment channels.',
+    readings: 'Submit certified physical meter readings with automated delta checks.',
+    users: 'Provision administrative, staff, and consumer security accounts.',
+    settings: 'Live connectivity status and health probes for Payment, Usage, and Identity APIs.'
   }[active];
 
   return (
     <div className="ops-shell">
       <aside className="ops-sidebar">
         <div className="ops-brand">
-          <div className="brand-mark" aria-hidden="true"><span>W</span></div>
-          <div><strong>NWSDB</strong><span>Service Operations</span></div>
-          <span className="ops-version">SOC</span>
+          <div className="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M12 2.8C12 2.8 5.5 10.1 5.5 14.6a6.5 6.5 0 0 0 13 0C18.5 10.1 12 2.8 12 2.8Z" /></svg>
+          </div>
+          <div>
+            <strong>NWSDB</strong>
+            <span>SOC Operations</span>
+          </div>
+          <span className="ops-version">SOC v1</span>
         </div>
-        <div className="ops-nav-label">WORKSPACE</div>
+
+        <div className="ops-nav-label">Operations Console</div>
         <nav>
           {nav.map(([id, label, icon]) => (
-            <button key={id} type="button" className={active === id ? 'active' : ''} onClick={() => setActive(id)}>
-              <Icon name={icon} /><span>{label}</span>
+            <button
+              key={id}
+              type="button"
+              className={active === id ? 'active' : ''}
+              onClick={() => setActive(id)}
+            >
+              <Icon name={icon} />
+              <span>{label}</span>
             </button>
           ))}
         </nav>
+
         <div className="ops-sidebar-bottom">
-          <div className="ops-role"><StatusPill status={user.role} /><span>Protected session</span></div>
-          <button type="button" className="ops-signout" onClick={onLogout}><Icon name="logout" /><span>Sign out</span></button>
+          <div className="ops-role">
+            <StatusPill status={user.role} />
+            <span>Authenticated</span>
+          </div>
+          <button type="button" className="ops-signout" onClick={onLogout}>
+            <Icon name="logout" />
+            <span>Sign out</span>
+          </button>
         </div>
       </aside>
 
       <main className="ops-main">
         <header className="ops-header">
-          <div className="ops-mobile-brand"><div className="brand-mark"><span>W</span></div><strong>NWSDB</strong></div>
-          <div className="ops-breadcrumb">Operations / <strong>{title}</strong></div>
-          <div className="ops-header-user"><div><strong>{user.fullName}</strong><span>{user.role}</span></div><div className="ops-avatar">{user.fullName?.charAt(0)?.toUpperCase() || 'U'}</div></div>
+          <div className="ops-breadcrumb">
+            NWSDB Service Operations / <strong>{title}</strong>
+          </div>
+          <div className="ops-header-user">
+            <div>
+              <strong>{user.fullName}</strong>
+              <span>{user.email}</span>
+            </div>
+            <div className="ops-avatar">
+              {user.fullName?.charAt(0)?.toUpperCase() || 'U'}
+            </div>
+          </div>
         </header>
 
         <section className="ops-content">
           <div className="ops-page-heading">
-            <div><p className="eyebrow">National Water Supply & Drainage Board</p><h1>{title}</h1><p>{subtitle}</p></div>
-            <div className="ops-page-actions"><div className="ops-live-status"><span className="live-dot" />All services online</div>{lastUpdated && <span className="ops-updated">Updated {lastUpdated.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>}</div>
+            <div>
+              <p className="eyebrow">Democratic Socialist Republic of Sri Lanka</p>
+              <h1>{title}</h1>
+              <p>{subtitle}</p>
+            </div>
+            <div className="ops-page-actions">
+              <div className="ops-live-status">
+                <span className="live-dot" />
+                Microservices Online
+              </div>
+              {lastUpdated && (
+                <span className="ops-updated">
+                  Synced {lastUpdated.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                </span>
+              )}
+            </div>
           </div>
 
-          {error && <div className="ops-alert ops-alert-error" role="alert"><strong>Action could not be completed</strong><span>{error}</span></div>}
-          {message && <div className="ops-alert ops-alert-success" role="status"><strong>Operation complete</strong><span>{message}</span></div>}
+          {error && (
+            <div className="error-banner" role="alert">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              <span>{error}</span>
+            </div>
+          )}
+
+          {message && (
+            <div className="success-banner" role="status">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14M22 4 12 14.01l-3-3"/></svg>
+              <span>{message}</span>
+            </div>
+          )}
 
           {active === 'dashboard' && (
             <>
               <div className="ops-kpi-grid">
-                <div className="ops-kpi"><div className="ops-kpi-top"><span>Payments</span><span className="kpi-icon">↗</span></div><strong>{payments.length}</strong><small><b>{completedPayments}</b> completed · {pendingPayments} pending</small></div>
-                <div className="ops-kpi"><div className="ops-kpi-top"><span>Pending payments</span><span className="kpi-icon kpi-warning">!</span></div><strong>{pendingPayments}</strong><small>{pendingPayments ? 'Requires processing' : 'No action required'}</small></div>
-                <div className="ops-kpi"><div className="ops-kpi-top"><span>Usage records</span><span className="kpi-icon">≈</span></div><strong>{usageHistory.length}</strong><small>Meter history for selected account</small></div>
-                <div className="ops-kpi"><div className="ops-kpi-top"><span>Latest consumption</span><span className="kpi-icon">◌</span></div><strong>{usage ? `${usage.unitsConsumed} <em>m³</em>` : '—'}</strong><small>{usage ? 'Units consumed' : 'Load an account'}</small></div>
+                <div className="ops-kpi">
+                  <div className="ops-kpi-top">
+                    <span>Total Payments</span>
+                    <span className="kpi-icon">↗</span>
+                  </div>
+                  <strong>{payments.length}</strong>
+                  <small><b>{completedPayments}</b> completed · {pendingPayments} pending</small>
+                </div>
+
+                <div className="ops-kpi">
+                  <div className="ops-kpi-top">
+                    <span>Pending Approvals</span>
+                    <span className="kpi-icon kpi-warning">!</span>
+                  </div>
+                  <strong style={{ color: pendingPayments > 0 ? 'var(--amber-700)' : 'var(--navy-950)' }}>
+                    {pendingPayments}
+                  </strong>
+                  <small>{pendingPayments > 0 ? 'Requires staff clearance' : 'All transactions cleared'}</small>
+                </div>
+
+                <div className="ops-kpi">
+                  <div className="ops-kpi-top">
+                    <span>Meter Readings</span>
+                    <span className="kpi-icon">≈</span>
+                  </div>
+                  <strong>{usageHistory.length}</strong>
+                  <small>Telemetry for {selectedAccount}</small>
+                </div>
+
+                <div className="ops-kpi">
+                  <div className="ops-kpi-top">
+                    <span>Estimated Due</span>
+                    <span className="kpi-icon">Rs</span>
+                  </div>
+                  <strong style={{ color: 'var(--blue-600)' }}>
+                    {usage ? `Rs. ${Number(usage.estimatedBill).toFixed(2)}` : '—'}
+                  </strong>
+                  <small>{usage ? `${usage.unitsConsumed} m³ consumed` : 'Load an account'}</small>
+                </div>
               </div>
 
               <div className="ops-dashboard-grid">
-                <section className="ops-panel ops-large">
-                  <div className="ops-panel-title"><div><span className="card-kicker">Account intelligence</span><h2>Consumption overview</h2></div><div className="ops-panel-meta"><span className="ops-caption">{selectedAccount || 'NWSDB-0001'}</span><span className="ops-period">Last 7 readings</span></div></div>
-                  {usage ? <div className="ops-overview">
-                    <div className="ops-big-number"><span>Current reading</span><strong>{usage.currentCubicMetres} <em>m³</em></strong><small>Estimated bill Rs. {Number(usage.estimatedBill).toFixed(2)}</small></div>
-                    <div className="ops-bars">{usageHistory.slice(0, 7).reverse().map((r, i) => <div className="ops-bar-item" key={r.id}><div className="ops-bar" style={{height:`${Math.max(12, Math.min(100, Number(r.cubicMetres || 0) / Math.max(1, Number(usage.currentCubicMetres || 1)) * 100))}%`}}></div><span>{i + 1}</span></div>)}</div>
-                  </div> : <div className="ops-empty">Load an account to populate operational metrics.</div>}
+                <section className="ops-panel">
+                  <div className="ops-panel-title">
+                    <div>
+                      <span className="card-kicker">Consumption Telemetry</span>
+                      <h2>Account Usage Trend</h2>
+                    </div>
+                    <div className="ops-panel-meta">
+                      <span className="ops-caption">{selectedAccount || 'NWSDB-0001'}</span>
+                      <span className="ops-period">Recent 7 Readings</span>
+                    </div>
+                  </div>
+
+                  {usage ? (
+                    <div className="ops-overview">
+                      <div className="ops-big-number">
+                        <span>Latest Meter Reading</span>
+                        <strong>{usage.currentCubicMetres} <em>m³</em></strong>
+                        <small>Period consumption: {usage.unitsConsumed} m³</small>
+                      </div>
+                      <div className="ops-bars">
+                        {usageHistory.slice(0, 7).reverse().map((r, i) => {
+                          const val = Number(r.cubicMetres || 0);
+                          const maxVal = Math.max(1, Number(usage.currentCubicMetres || 1));
+                          const heightPct = Math.max(14, Math.min(100, Math.round((val / maxVal) * 100)));
+                          return (
+                            <div className="ops-bar-item" key={r.id || i}>
+                              <div className="ops-bar" style={{ height: `${heightPct}%` }} title={`${val} m³ on ${new Date(r.readingDateUtc).toLocaleDateString()}`} />
+                              <span>{i + 1}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="ops-empty">
+                      Select or search an account to populate telemetry charts.
+                    </div>
+                  )}
                 </section>
 
                 <section className="ops-panel">
-                  <div className="ops-panel-title"><div><span className="card-kicker">Account</span><h2>Quick lookup</h2></div><div className="ops-search-badge"><Icon name="search" /></div></div>
-                  <form className="ops-lookup" onSubmit={e => { e.preventDefault(); loadAccount(); }}>
-                    <label>Customer account<div className="ops-input-wrap"><Icon name="search" /><input value={accountNumber} onChange={e => setAccountNumber(e.target.value)} placeholder="NWSDB-0001" /></div></label>
-                    <button type="submit" disabled={loading}>{loading ? 'Loading…' : 'Open account'}</button>
+                  <div className="ops-panel-title">
+                    <div>
+                      <span className="card-kicker">Account Lookup</span>
+                      <h2>Quick Switch</h2>
+                    </div>
+                    <Icon name="search" />
+                  </div>
+
+                  <form className="ops-lookup" onSubmit={(e) => { e.preventDefault(); loadAccount(); }}>
+                    <div className="ops-input-wrap">
+                      <Icon name="search" />
+                      <input
+                        value={accountNumber}
+                        onChange={(e) => setAccountNumber(e.target.value)}
+                        placeholder="e.g. NWSDB-0001"
+                      />
+                    </div>
+                    <button type="submit" disabled={loading} className="btn-blue" style={{ width: '100%', marginTop: '6px' }}>
+                      {loading ? 'Querying APIs…' : 'Inspect Account'}
+                    </button>
                   </form>
-                  {usage && <div className="ops-mini-grid"><div><span>Average reading</span><strong>{avgUsage} m³</strong></div><div><span>Payments</span><strong>{payments.length}</strong></div></div>}
+
+                  {customerAccounts.length > 0 && (
+                    <div style={{ marginTop: '14px' }}>
+                      <span className="card-kicker">Known Registered Accounts</span>
+                      <div className="customer-quick-picker">
+                        {customerAccounts.slice(0, 5).map((c) => (
+                          <button
+                            key={c.accountNumber}
+                            type="button"
+                            className={`customer-quick-chip ${selectedAccount === c.accountNumber ? 'active' : ''}`}
+                            onClick={() => {
+                              setAccountNumber(c.accountNumber);
+                              loadAccount(c.accountNumber);
+                            }}
+                          >
+                            {c.accountNumber}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {usage && (
+                    <div className="ops-mini-grid">
+                      <div>
+                        <span>Average Telemetry</span>
+                        <strong>{avgUsage} m³</strong>
+                      </div>
+                      <div>
+                        <span>Recorded Payments</span>
+                        <strong>{payments.length}</strong>
+                      </div>
+                    </div>
+                  )}
                 </section>
               </div>
 
               <section className="ops-panel ops-table-panel">
-                <div className="ops-panel-title"><div><span className="card-kicker">Transactions</span><h2>Recent payments</h2></div><button type="button" className="ops-text-button" onClick={() => setActive('payments')}>View all <span>→</span></button></div>
+                <div className="ops-panel-title">
+                  <div>
+                    <span className="card-kicker">Pending Transactions</span>
+                    <h2>Recent Payments for {selectedAccount}</h2>
+                  </div>
+                  <button type="button" className="btn-secondary" style={{ padding: '5px 12px', fontSize: '11px' }} onClick={() => setActive('payments')}>
+                    View All Payments →
+                  </button>
+                </div>
                 <PaymentTable payments={payments.slice(0, 5)} onComplete={updatePaymentStatus} />
               </section>
             </>
           )}
 
-          {active === 'customers' && <AccountWorkspace {...{accountNumber,setAccountNumber,loadAccount,loading,usage,payments,usageHistory,selectedAccount}} />}
-          {active === 'usage' && <UsageWorkspace usage={usage} usageHistory={usageHistory} selectedAccount={selectedAccount} accountNumber={accountNumber} setAccountNumber={setAccountNumber} loadAccount={loadAccount} loading={loading} />}
-          {active === 'payments' && <section className="ops-panel ops-table-panel"><div className="ops-panel-title"><div><span className="card-kicker">Payment service</span><h2>Transaction history</h2></div><StatusPill status={`${payments.length} records`} /></div><PaymentTable payments={payments} onComplete={updatePaymentStatus} /></section>}
-          {active === 'readings' && <ReadingWorkspace usageHistory={usageHistory} selectedAccount={selectedAccount} reading={reading} setReading={setReading} recordReading={recordReading} />}
-          {active === 'users' && isAdmin && <UserWorkspace users={users} newUser={newUser} setNewUser={setNewUser} createUser={createUser} />}
-          {active === 'settings' && <SystemWorkspace isAdmin={isAdmin} user={user} />}
+          {active === 'customers' && (
+            <AccountWorkspace
+              accountNumber={accountNumber}
+              setAccountNumber={setAccountNumber}
+              loadAccount={loadAccount}
+              loading={loading}
+              usage={usage}
+              payments={payments}
+              usageHistory={usageHistory}
+              selectedAccount={selectedAccount}
+              customerAccounts={customerAccounts}
+            />
+          )}
+
+          {active === 'usage' && (
+            <UsageWorkspace
+              usage={usage}
+              usageHistory={usageHistory}
+              selectedAccount={selectedAccount}
+              accountNumber={accountNumber}
+              setAccountNumber={setAccountNumber}
+              loadAccount={loadAccount}
+              loading={loading}
+            />
+          )}
+
+          {active === 'payments' && (
+            <PaymentWorkspace
+              payments={payments}
+              selectedAccount={selectedAccount}
+              onComplete={updatePaymentStatus}
+              loadAccount={loadAccount}
+            />
+          )}
+
+          {active === 'readings' && (
+            <ReadingWorkspace
+              usageHistory={usageHistory}
+              selectedAccount={selectedAccount}
+              reading={reading}
+              setReading={setReading}
+              recordReading={recordReading}
+              latestUsage={usage}
+            />
+          )}
+
+          {active === 'users' && isAdmin && (
+            <UserWorkspace
+              users={users}
+              newUser={newUser}
+              setNewUser={setNewUser}
+              createUser={createUser}
+            />
+          )}
+
+          {active === 'settings' && (
+            <SystemWorkspace
+              isAdmin={isAdmin}
+              user={user}
+              healthStatus={healthStatus}
+              healthLoading={healthLoading}
+              onRefreshHealth={runHealthCheck}
+            />
+          )}
         </section>
       </main>
     </div>
   );
 }
 
-function AccountWorkspace({ accountNumber, setAccountNumber, loadAccount, loading, usage, payments, usageHistory, selectedAccount }) {
-  return <div className="ops-stack"><section className="ops-panel"><div className="ops-panel-title"><div><span className="card-kicker">Customer lookup</span><h2>Account workspace</h2></div></div><form className="ops-search" onSubmit={e => {e.preventDefault();loadAccount();}}><label>Customer account number<input value={accountNumber} onChange={e=>setAccountNumber(e.target.value)} /></label><button type="submit" disabled={loading}>{loading?'Loading…':'Load account'}</button></form></section>{selectedAccount && <><section className="ops-detail-grid"><Metric title="Current usage" value={usage ? `${usage.unitsConsumed} m³` : '—'} note="Units consumed" /><Metric title="Estimated bill" value={usage ? `Rs. ${Number(usage.estimatedBill).toFixed(2)}` : '—'} note="Current estimate" /><Metric title="Payments" value={payments.length} note="Recorded transactions" /><Metric title="Readings" value={usageHistory.length} note="Meter history" /></section><section className="ops-panel"><div className="ops-panel-title"><h2>Account summary</h2><span>{selectedAccount}</span></div>{usage ? <div className="ops-detail-list"><div><span>Current reading</span><strong>{usage.currentCubicMetres} m³</strong></div><div><span>Previous reading</span><strong>{usage.previousCubicMetres} m³</strong></div><div><span>Units consumed</span><strong>{usage.unitsConsumed} m³</strong></div><div><span>Estimated bill</span><strong>Rs. {Number(usage.estimatedBill).toFixed(2)}</strong></div></div> : <div className="ops-empty">No usage data available.</div>}</section></>}</div>;
+function AccountWorkspace({
+  accountNumber,
+  setAccountNumber,
+  loadAccount,
+  loading,
+  usage,
+  payments,
+  usageHistory,
+  selectedAccount,
+  customerAccounts
+}) {
+  return (
+    <div style={{ display: 'grid', gap: '20px' }}>
+      <section className="ops-panel">
+        <div className="ops-panel-title">
+          <div>
+            <span className="card-kicker">Consumer Query</span>
+            <h2>Select or Search Account</h2>
+          </div>
+        </div>
+
+        <form className="ops-search" onSubmit={(e) => { e.preventDefault(); loadAccount(); }} style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: '14px', alignItems: 'end' }}>
+          <label style={{ margin: 0 }}>
+            Account Number
+            <input
+              value={accountNumber}
+              onChange={(e) => setAccountNumber(e.target.value)}
+              placeholder="e.g. NWSDB-0001"
+              required
+            />
+          </label>
+          <button type="submit" disabled={loading} className="btn-blue">
+            {loading ? 'Searching…' : 'Inspect Account'}
+          </button>
+        </form>
+
+        <div style={{ marginTop: '16px' }}>
+          <span className="card-kicker">Available Consumer Connections</span>
+          <div className="customer-quick-picker">
+            {customerAccounts.map((c) => (
+              <button
+                key={c.accountNumber}
+                type="button"
+                className={`customer-quick-chip ${selectedAccount === c.accountNumber ? 'active' : ''}`}
+                onClick={() => {
+                  setAccountNumber(c.accountNumber);
+                  loadAccount(c.accountNumber);
+                }}
+              >
+                <strong>{c.accountNumber}</strong> ({c.name})
+              </button>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {selectedAccount && (
+        <>
+          <div className="ops-kpi-grid">
+            <div className="ops-kpi">
+              <div className="ops-kpi-top"><span>Current Consumption</span></div>
+              <strong>{usage ? `${usage.unitsConsumed} m³` : '—'}</strong>
+              <small>Units this period</small>
+            </div>
+            <div className="ops-kpi">
+              <div className="ops-kpi-top"><span>Current Bill</span></div>
+              <strong style={{ color: 'var(--blue-600)' }}>
+                {usage ? `Rs. ${Number(usage.estimatedBill).toFixed(2)}` : '—'}
+              </strong>
+              <small>Domestic tariff calculated</small>
+            </div>
+            <div className="ops-kpi">
+              <div className="ops-kpi-top"><span>Settled Payments</span></div>
+              <strong>{payments.filter((p) => p.status === 'Completed').length}</strong>
+              <small>Cleared transactions</small>
+            </div>
+            <div className="ops-kpi">
+              <div className="ops-kpi-top"><span>Reading Count</span></div>
+              <strong>{usageHistory.length}</strong>
+              <small>Historical meter audits</small>
+            </div>
+          </div>
+
+          <section className="ops-panel">
+            <div className="ops-panel-title">
+              <h2>Account Diagnostic Summary</h2>
+              <span className="ops-caption">{selectedAccount}</span>
+            </div>
+            {usage ? (
+              <div className="ops-detail-list">
+                <div><span>Current Meter Reading</span><strong>{usage.currentCubicMetres} m³</strong></div>
+                <div><span>Previous Meter Reading</span><strong>{usage.previousCubicMetres} m³</strong></div>
+                <div><span>Net Volumetric Consumption</span><strong>{usage.unitsConsumed} m³</strong></div>
+                <div><span>Last Verified Telemetry Date</span><strong>{new Date(usage.readingDateUtc).toLocaleString()}</strong></div>
+                <div><span>Calculated Outstanding Bill</span><strong>Rs. {Number(usage.estimatedBill).toFixed(2)}</strong></div>
+                <div><span>Account Supply Status</span><strong>Active Standard Connection</strong></div>
+              </div>
+            ) : (
+              <div className="ops-empty">No telemetry records exist for this account yet.</div>
+            )}
+          </section>
+        </>
+      )}
+    </div>
+  );
 }
 
 function UsageWorkspace({ usage, usageHistory, selectedAccount, accountNumber, setAccountNumber, loadAccount, loading }) {
-  return <div className="ops-stack"><section className="ops-panel"><div className="ops-panel-title"><div><span className="card-kicker">Usage service</span><h2>Consumption analysis</h2></div></div><form className="ops-search" onSubmit={e=>{e.preventDefault();loadAccount();}}><label>Account<input value={accountNumber} onChange={e=>setAccountNumber(e.target.value)} /></label><button type="submit" disabled={loading}>{loading?'Loading…':'Load usage'}</button></form></section><section className="ops-panel">{usage ? <div className="ops-detail-list"><div><span>Account</span><strong>{selectedAccount}</strong></div><div><span>Current</span><strong>{usage.currentCubicMetres} m³</strong></div><div><span>Previous</span><strong>{usage.previousCubicMetres} m³</strong></div><div><span>Consumed</span><strong>{usage.unitsConsumed} m³</strong></div><div><span>Estimated bill</span><strong>Rs. {Number(usage.estimatedBill).toFixed(2)}</strong></div></div> : <div className="ops-empty">Load an account to inspect usage.</div>}</section><section className="ops-panel"><div className="ops-panel-title"><h2>Meter history</h2><span>{usageHistory.length} records</span></div><MeterTable rows={usageHistory}/></section></div>;
+  return (
+    <div style={{ display: 'grid', gap: '20px' }}>
+      <section className="ops-panel">
+        <div className="ops-panel-title">
+          <div>
+            <span className="card-kicker">Metering Service</span>
+            <h2>Consumption Analysis for {selectedAccount}</h2>
+          </div>
+        </div>
+        <form onSubmit={(e) => { e.preventDefault(); loadAccount(); }} style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: '14px', alignItems: 'end' }}>
+          <label style={{ margin: 0 }}>
+            Account Number
+            <input value={accountNumber} onChange={(e) => setAccountNumber(e.target.value)} />
+          </label>
+          <button type="submit" disabled={loading} className="btn-blue">
+            {loading ? 'Querying…' : 'Load Usage'}
+          </button>
+        </form>
+      </section>
+
+      {usage && (
+        <section className="ops-panel">
+          <div className="ops-panel-title">
+            <h2>Current Tariff & Volume Breakdown</h2>
+            <StatusPill status="Verified" />
+          </div>
+          <div className="ops-detail-list">
+            <div><span>Current Index</span><strong>{usage.currentCubicMetres} m³</strong></div>
+            <div><span>Previous Index</span><strong>{usage.previousCubicMetres} m³</strong></div>
+            <div><span>Volume Consumed</span><strong>{usage.unitsConsumed} m³</strong></div>
+            <div><span>Estimated Bill</span><strong>Rs. {Number(usage.estimatedBill).toFixed(2)}</strong></div>
+          </div>
+        </section>
+      )}
+
+      <section className="ops-panel">
+        <div className="ops-panel-title">
+          <h2>Meter Reading Log</h2>
+          <span className="muted">{usageHistory.length} total readings</span>
+        </div>
+        <MeterTable rows={usageHistory} />
+      </section>
+    </div>
+  );
 }
 
-function ReadingWorkspace({ usageHistory, selectedAccount, reading, setReading, recordReading }) {
-  return <div className="ops-stack"><section className="ops-panel"><div className="ops-panel-title"><div><span className="card-kicker">Metering service</span><h2>Record reading</h2></div><StatusPill status="Staff / Admin" /></div>{selectedAccount ? <form className="ops-inline-form" onSubmit={recordReading}><label>Account<input value={selectedAccount} readOnly /></label><label>New reading (m³)<input type="number" min="0" step="0.01" value={reading} onChange={e=>setReading(e.target.value)} required /></label><button type="submit">Record reading</button></form> : <div className="ops-empty">Select an account from Customers first.</div>}</section><section className="ops-panel"><div className="ops-panel-title"><h2>Reading history</h2><span>{usageHistory.length} records</span></div><MeterTable rows={usageHistory}/></section></div>;
+function PaymentWorkspace({ payments, selectedAccount, onComplete, loadAccount }) {
+  const [filter, setFilter] = useState('ALL');
+  const [query, setQuery] = useState('');
+
+  const filtered = useMemo(() => {
+    return payments.filter((p) => {
+      const matchesFilter = filter === 'ALL' || p.status === filter;
+      const matchesQuery = !query ||
+        p.referenceNumber?.toLowerCase().includes(query.toLowerCase()) ||
+        p.channel?.toLowerCase().includes(query.toLowerCase());
+      return matchesFilter && matchesQuery;
+    });
+  }, [payments, filter, query]);
+
+  return (
+    <section className="ops-panel">
+      <div className="ops-panel-title">
+        <div>
+          <span className="card-kicker">Payment Microservice</span>
+          <h2>Payment Records & Clearance for {selectedAccount}</h2>
+        </div>
+        <button type="button" className="btn-secondary" style={{ padding: '6px 12px', fontSize: '11px' }} onClick={() => loadAccount(selectedAccount)}>
+          Refresh Records
+        </button>
+      </div>
+
+      <div style={{ display: 'flex', justifyContent: 'space-between', gap: '14px', margin: '14px 0', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: '6px' }}>
+          {['ALL', 'Pending', 'Completed', 'Failed'].map((status) => (
+            <button
+              key={status}
+              type="button"
+              className={`preset-chip ${filter === status ? 'active' : ''}`}
+              onClick={() => setFilter(status)}
+            >
+              {status}
+            </button>
+          ))}
+        </div>
+        <input
+          type="search"
+          placeholder="Filter reference or channel…"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          style={{ width: '240px', margin: 0, padding: '7px 12px' }}
+        />
+      </div>
+
+      <PaymentTable payments={filtered} onComplete={onComplete} />
+    </section>
+  );
+}
+
+function ReadingWorkspace({ usageHistory, selectedAccount, reading, setReading, recordReading, latestUsage }) {
+  const prevReading = latestUsage?.currentCubicMetres ?? 0;
+  const numReading = Number(reading || 0);
+  const delta = reading ? (numReading - prevReading).toFixed(2) : null;
+  const isBackwards = reading && numReading < prevReading;
+
+  return (
+    <div style={{ display: 'grid', gap: '20px' }}>
+      <section className="ops-panel">
+        <div className="ops-panel-title">
+          <div>
+            <span className="card-kicker">Field Metering Service</span>
+            <h2>Record Certified Meter Index</h2>
+          </div>
+          <StatusPill status="Staff / Admin Access" />
+        </div>
+
+        {selectedAccount ? (
+          <form onSubmit={recordReading}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '14px', marginBottom: '14px' }}>
+              <label>
+                Target Account
+                <input value={selectedAccount} readOnly />
+              </label>
+
+              <label>
+                Previous Reading (m³)
+                <input value={`${prevReading} m³`} readOnly />
+              </label>
+
+              <label>
+                New Meter Reading (m³)
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={reading}
+                  onChange={(e) => setReading(e.target.value)}
+                  placeholder={`Greater than ${prevReading}`}
+                  required
+                />
+              </label>
+            </div>
+
+            {reading && (
+              <div style={{ marginBottom: '16px', padding: '10px 14px', borderRadius: '8px', background: isBackwards ? 'var(--ruby-50)' : 'var(--blue-50)', border: `1px solid ${isBackwards ? 'var(--ruby-100)' : 'var(--blue-100)'}` }}>
+                {isBackwards ? (
+                  <span style={{ color: 'var(--ruby-700)', fontWeight: 700, fontSize: '12px' }}>
+                    Warning: Reading {numReading} m³ is less than previous index {prevReading} m³. Meter dial turnover requires verification.
+                  </span>
+                ) : (
+                  <span style={{ color: 'var(--navy-800)', fontWeight: 700, fontSize: '12px' }}>
+                    Calculated consumption difference: +{delta} m³
+                  </span>
+                )}
+              </div>
+            )}
+
+            <button type="submit" className="btn-blue" disabled={!reading}>
+              Save & Certify Meter Reading
+            </button>
+          </form>
+        ) : (
+          <div className="ops-empty">
+            Select an account from the Customer Workspace first.
+          </div>
+        )}
+      </section>
+
+      <section className="ops-panel">
+        <div className="ops-panel-title">
+          <h2>Reading History for {selectedAccount}</h2>
+          <span className="muted">{usageHistory.length} verified records</span>
+        </div>
+        <MeterTable rows={usageHistory} />
+      </section>
+    </div>
+  );
 }
 
 function UserWorkspace({ users, newUser, setNewUser, createUser }) {
-  return <div className="ops-dashboard-grid"><form className="ops-panel" onSubmit={createUser}><div className="ops-panel-title"><div><span className="card-kicker">Access control</span><h2>Create account</h2></div><StatusPill status="Admin only" /></div><label>Full name<input value={newUser.fullName} onChange={e=>setNewUser({...newUser,fullName:e.target.value})} required /></label><label>Email<input type="email" value={newUser.email} onChange={e=>setNewUser({...newUser,email:e.target.value})} required /></label><label>Temporary password<input type="password" minLength="6" value={newUser.password} onChange={e=>setNewUser({...newUser,password:e.target.value})} required /></label><div className="form-grid"><label>Role<select value={newUser.role} onChange={e=>setNewUser({...newUser,role:e.target.value})}><option>Staff</option><option>Customer</option><option>Partner</option><option>Admin</option></select></label><label>Account number<input value={newUser.accountNumber} onChange={e=>setNewUser({...newUser,accountNumber:e.target.value})} placeholder="Optional" /></label></div><button type="submit">Create user</button></form><section className="ops-panel"><div className="ops-panel-title"><div><span className="card-kicker">Directory</span><h2>Registered users</h2></div><span>{users.length} accounts</span></div><div className="table-wrap"><table><thead><tr><th>User</th><th>Role</th><th>Account</th></tr></thead><tbody>{users.map(u=><tr key={u.id}><td><strong>{u.fullName}</strong><br/><span className="muted">{u.email}</span></td><td><StatusPill status={u.role}/></td><td>{u.accountNumber||'—'}</td></tr>)}</tbody></table></div></section></div>;
+  const [roleFilter, setRoleFilter] = useState('ALL');
+
+  const filteredUsers = useMemo(() => {
+    return users.filter((u) => roleFilter === 'ALL' || u.role === roleFilter);
+  }, [users, roleFilter]);
+
+  return (
+    <div className="ops-dashboard-grid">
+      <form className="ops-panel" onSubmit={createUser}>
+        <div className="ops-panel-title">
+          <div>
+            <span className="card-kicker">Role-Based Access Control</span>
+            <h2>Provision User Account</h2>
+          </div>
+          <StatusPill status="Admin Only" />
+        </div>
+
+        <label>
+          Full Name
+          <input
+            value={newUser.fullName}
+            onChange={(e) => setNewUser({ ...newUser, fullName: e.target.value })}
+            placeholder="Official full name"
+            required
+          />
+        </label>
+
+        <label>
+          Email Address
+          <input
+            type="email"
+            value={newUser.email}
+            onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
+            placeholder="user@nwsdb.local"
+            required
+          />
+        </label>
+
+        <label>
+          Temporary Password
+          <input
+            type="password"
+            minLength="6"
+            value={newUser.password}
+            onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
+            placeholder="Min 6 characters"
+            required
+          />
+        </label>
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+          <label>
+            Security Role
+            <select
+              value={newUser.role}
+              onChange={(e) => setNewUser({ ...newUser, role: e.target.value })}
+            >
+              <option value="Staff">Staff</option>
+              <option value="Customer">Customer</option>
+              <option value="Admin">Admin</option>
+              <option value="Partner">Partner</option>
+            </select>
+          </label>
+
+          <label>
+            Assigned Account #
+            <input
+              value={newUser.accountNumber}
+              onChange={(e) => setNewUser({ ...newUser, accountNumber: e.target.value })}
+              placeholder="e.g. NWSDB-0002"
+            />
+          </label>
+        </div>
+
+        <button type="submit" className="btn-blue" style={{ width: '100%', marginTop: '8px' }}>
+          Provision User Account
+        </button>
+      </form>
+
+      <section className="ops-panel">
+        <div className="ops-panel-title">
+          <div>
+            <span className="card-kicker">Directory</span>
+            <h2>Active System Users</h2>
+          </div>
+          <span className="muted">{filteredUsers.length} accounts</span>
+        </div>
+
+        <div style={{ display: 'flex', gap: '6px', marginBottom: '14px' }}>
+          {['ALL', 'Admin', 'Staff', 'Customer', 'Partner'].map((r) => (
+            <button
+              key={r}
+              type="button"
+              className={`preset-chip ${roleFilter === r ? 'active' : ''}`}
+              onClick={() => setRoleFilter(r)}
+            >
+              {r}
+            </button>
+          ))}
+        </div>
+
+        <div className="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>User Details</th>
+                <th>Role</th>
+                <th>Account #</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredUsers.map((u) => (
+                <tr key={u.id}>
+                  <td>
+                    <strong>{u.fullName}</strong>
+                    <div style={{ fontSize: '11px', color: 'var(--slate-400)' }}>{u.email}</div>
+                  </td>
+                  <td><StatusPill status={u.role} /></td>
+                  <td>{u.accountNumber || '—'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+  );
 }
 
-function SystemWorkspace({ isAdmin, user }) {
-  const services = [['Identity Service','JWT authentication & roles','5021'],['Payment Service','Payment lifecycle API','5000'],['Usage Service','Meter usage API','5010']];
-  return <div className="ops-stack"><section className="ops-panel"><div className="ops-panel-title"><div><span className="card-kicker">Architecture</span><h2>Service health</h2></div><StatusPill status="Operational"/></div><div className="service-list">{services.map(([name,desc,port])=><div key={name}><div className="service-dot"/><div><strong>{name}</strong><span>{desc}</span></div><code>localhost:{port}</code></div>)}</div></section><section className="ops-panel"><div className="ops-panel-title"><div><span className="card-kicker">Security</span><h2>Current access context</h2></div></div><div className="ops-detail-list"><div><span>Authenticated user</span><strong>{user.fullName}</strong></div><div><span>Role</span><strong>{user.role}</strong></div><div><span>Authorization</span><strong>JWT Bearer + role policies</strong></div><div><span>Administrative access</span><strong>{isAdmin ? 'Enabled' : 'Restricted'}</strong></div></div></section></div>;
+function SystemWorkspace({ isAdmin, user, healthStatus, healthLoading, onRefreshHealth }) {
+  return (
+    <div style={{ display: 'grid', gap: '20px' }}>
+      <section className="ops-panel">
+        <div className="ops-panel-title">
+          <div>
+            <span className="card-kicker">Microservices Architecture</span>
+            <h2>Real-Time System Connectivity & Probes</h2>
+          </div>
+          <button
+            type="button"
+            className="btn-secondary"
+            onClick={onRefreshHealth}
+            disabled={healthLoading}
+            style={{ fontSize: '11px', padding: '5px 12px' }}
+          >
+            {healthLoading ? 'Probing Services…' : 'Ping All Microservices'}
+          </button>
+        </div>
+
+        <div className="service-health-grid">
+          {healthStatus.length > 0 ? (
+            healthStatus.map((s) => (
+              <div className="service-health-card" key={s.name}>
+                <div className={`service-dot ${s.ok ? '' : 'dot-offline'}`} />
+                <div className="service-info">
+                  <strong>{s.name}</strong>
+                  <span>{s.baseUrl}</span>
+                </div>
+                <div className="service-latency">
+                  {s.latency} ms roundtrip
+                </div>
+                <div>
+                  <StatusPill status={s.status} />
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="ops-empty">
+              Probing Identity, Payment, and Usage microservices…
+            </div>
+          )}
+        </div>
+      </section>
+
+      <section className="ops-panel">
+        <div className="ops-panel-title">
+          <div>
+            <span className="card-kicker">Security Context</span>
+            <h2>Current Operator Session Policy</h2>
+          </div>
+          <StatusPill status="JWT Authenticated" />
+        </div>
+        <div className="ops-detail-list">
+          <div><span>Operator Identity</span><strong>{user.fullName} ({user.email})</strong></div>
+          <div><span>Assigned Role</span><strong>{user.role}</strong></div>
+          <div><span>Authorization Mechanism</span><strong>JWT Bearer with Role Claims</strong></div>
+          <div><span>Administrative Privileges</span><strong>{isAdmin ? 'Granted (Full Access)' : 'Standard Staff Operations'}</strong></div>
+          <div><span>Target Architecture</span><strong>.NET 10 Microservices + React Client</strong></div>
+          <div><span>Data Isolation</span><strong>Independent DB Stores (InMemory SOC Pattern)</strong></div>
+        </div>
+      </section>
+    </div>
+  );
 }
 
 function PaymentTable({ payments, onComplete }) {
-  return <div className="table-wrap"><table><thead><tr><th>Reference</th><th>Amount</th><th>Channel</th><th>Status</th><th>Action</th></tr></thead><tbody>{payments.length ? payments.map(p=><tr key={p.id}><td><strong>{p.referenceNumber}</strong></td><td>Rs. {Number(p.amount).toFixed(2)}</td><td>{p.channel}</td><td><StatusPill status={p.status}/></td><td>{p.status==='Pending'?<button className="table-button" type="button" onClick={()=>onComplete(p.id,'Completed')}>Complete</button>:<span className="muted">Processed</span>}</td></tr>):<tr><td colSpan="5" className="empty-cell">No payments for this account.</td></tr>}</tbody></table></div>;
+  return (
+    <div className="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Reference Number</th>
+            <th>Account</th>
+            <th>Amount</th>
+            <th>Channel</th>
+            <th>Status</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {payments.length ? (
+            payments.map((p) => (
+              <tr key={p.id}>
+                <td><strong>{p.referenceNumber}</strong></td>
+                <td>{p.accountNumber}</td>
+                <td>Rs. {Number(p.amount).toFixed(2)}</td>
+                <td>{p.channel}</td>
+                <td><StatusPill status={p.status} /></td>
+                <td>
+                  {p.status === 'Pending' ? (
+                    <button
+                      className="table-button"
+                      type="button"
+                      onClick={() => onComplete(p.id, 'Completed')}
+                    >
+                      Clear & Approve
+                    </button>
+                  ) : (
+                    <span className="muted" style={{ fontSize: '11px' }}>Processed</span>
+                  )}
+                </td>
+              </tr>
+            ))
+          ) : (
+            <tr>
+              <td colSpan="6" className="empty-cell">
+                No payment transactions recorded for this account.
+              </td>
+            </tr>
+          )}
+        </tbody>
+      </table>
+    </div>
+  );
 }
 
 function MeterTable({ rows }) {
-  return <div className="table-wrap"><table><thead><tr><th>Reading</th><th>Date (UTC)</th></tr></thead><tbody>{rows.length?rows.map(r=><tr key={r.id}><td><strong>{r.cubicMetres} m³</strong></td><td>{new Date(r.readingDateUtc).toLocaleString()}</td></tr>):<tr><td colSpan="2" className="empty-cell">No readings found.</td></tr>}</tbody></table></div>;
-}
-
-function Metric({ title, value, note }) {
-  return <div className="ops-kpi"><span>{title}</span><strong>{value}</strong><small>{note}</small></div>;
+  return (
+    <div className="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Telemetry Reading</th>
+            <th>Timestamp (UTC)</th>
+            <th>Verification Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.length ? (
+            rows.map((r) => (
+              <tr key={r.id}>
+                <td><strong>{r.cubicMetres} m³</strong></td>
+                <td>{new Date(r.readingDateUtc).toLocaleString()}</td>
+                <td><span className="status-pill status-completed">Verified Telemetry</span></td>
+              </tr>
+            ))
+          ) : (
+            <tr>
+              <td colSpan="3" className="empty-cell">
+                No physical or automated readings logged.
+              </td>
+            </tr>
+          )}
+        </tbody>
+      </table>
+    </div>
+  );
 }

@@ -59,17 +59,20 @@ export const PaymentApi = {
     fetch(`${PAYMENT_API}/payments`, authorizedOptions({
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ accountNumber, amount, channel })
+      body: JSON.stringify({ accountNumber, amount: Number(amount), channel })
     })).then(handle),
 
   historyForAccount: (accountNumber) =>
     fetch(`${PAYMENT_API}/payments/account/${encodeURIComponent(accountNumber)}`, authorizedOptions()).then(handle),
-  updateStatus: (id, status) =>
-    fetch(`${PAYMENT_API}/payments/${id}/status`, authorizedOptions({
+
+  updateStatus: (id, status) => {
+    const payload = typeof status === 'string' ? { status } : status;
+    return fetch(`${PAYMENT_API}/payments/${id}/status`, authorizedOptions({
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(status)
-    })).then(handle)
+      body: JSON.stringify(payload)
+    })).then(handle);
+  }
 };
 
 export const UsageApi = {
@@ -78,10 +81,39 @@ export const UsageApi = {
 
   history: (accountNumber) =>
     fetch(`${USAGE_API}/usage/${encodeURIComponent(accountNumber)}/history`, authorizedOptions()).then(handle),
+
   record: (accountNumber, cubicMetres) =>
     fetch(`${USAGE_API}/usage/readings`, authorizedOptions({
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ accountNumber, cubicMetres: Number(cubicMetres) })
     })).then(handle)
+};
+
+export const HealthApi = {
+  checkService: async (name, baseUrl) => {
+    const start = (typeof performance !== 'undefined' ? performance.now() : Date.now());
+    try {
+      const res = await fetch(`${baseUrl}/health`, { method: 'GET' });
+      const duration = Math.round((typeof performance !== 'undefined' ? performance.now() : Date.now()) - start);
+      if (res.ok) {
+        const data = await res.json().catch(() => ({ status: 'healthy' }));
+        return { name, baseUrl, status: 'Operational', latency: duration, data, ok: true };
+      }
+      return { name, baseUrl, status: `HTTP ${res.status}`, latency: duration, ok: false };
+    } catch (e) {
+      const duration = Math.round((typeof performance !== 'undefined' ? performance.now() : Date.now()) - start);
+      return { name, baseUrl, status: 'Offline', latency: duration, error: e.message, ok: false };
+    }
+  },
+  checkAll: async () => {
+    const identityRoot = IDENTITY_API.replace(/\/api\/v1\/?$/, '');
+    const paymentRoot = PAYMENT_API.replace(/\/api\/v1\/?$/, '');
+    const usageRoot = USAGE_API.replace(/\/api\/v1\/?$/, '');
+    return Promise.all([
+      HealthApi.checkService('Identity Service', identityRoot),
+      HealthApi.checkService('Payment Service', paymentRoot),
+      HealthApi.checkService('Usage Service', usageRoot)
+    ]);
+  }
 };
