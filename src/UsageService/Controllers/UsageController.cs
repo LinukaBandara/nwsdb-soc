@@ -1,3 +1,5 @@
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using NWSDB.UsageService.Models;
 using NWSDB.UsageService.Services;
@@ -7,6 +9,7 @@ namespace NWSDB.UsageService.Controllers;
 [ApiController]
 [Route("api/v1/[controller]")]
 [Produces("application/json")]
+[Authorize]
 public class UsageController : ControllerBase
 {
     private readonly IUsageService _usageService;
@@ -16,8 +19,8 @@ public class UsageController : ControllerBase
         _usageService = usageService;
     }
 
-    /// <summary>Record a new meter reading.</summary>
     [HttpPost("readings")]
+    [Authorize(Roles = "Staff,Admin")]
     [ProducesResponseType(typeof(MeterReading), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<MeterReading>> RecordReading(RecordReadingRequest request)
@@ -32,28 +35,44 @@ public class UsageController : ControllerBase
         return CreatedAtAction(nameof(GetHistory), new { accountNumber = reading.AccountNumber }, reading);
     }
 
-    /// <summary>Get the latest usage and estimated bill for an account.</summary>
     [HttpGet("{accountNumber}/latest")]
     [ProducesResponseType(typeof(UsageResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<ActionResult<UsageResponse>> GetLatest(string accountNumber)
     {
         if (string.IsNullOrWhiteSpace(accountNumber))
             return BadRequest("accountNumber is required.");
 
+        if (!CanAccessAccount(accountNumber))
+            return Forbid();
+
         var usage = await _usageService.GetLatestUsageAsync(accountNumber);
         return usage is null ? NotFound() : Ok(usage);
     }
 
-    /// <summary>Get meter-reading history for an account.</summary>
     [HttpGet("{accountNumber}/history")]
     [ProducesResponseType(typeof(IEnumerable<MeterReading>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<ActionResult<IEnumerable<MeterReading>>> GetHistory(string accountNumber)
     {
         if (string.IsNullOrWhiteSpace(accountNumber))
             return BadRequest("accountNumber is required.");
 
+        if (!CanAccessAccount(accountNumber))
+            return Forbid();
+
         var history = await _usageService.GetHistoryAsync(accountNumber);
         return Ok(history);
+    }
+
+    private bool CanAccessAccount(string accountNumber)
+    {
+        if (User.IsInRole("Staff") || User.IsInRole("Admin"))
+            return true;
+
+        var tokenAccount = User.FindFirstValue("accountNumber");
+        return !string.IsNullOrWhiteSpace(tokenAccount) &&
+               string.Equals(tokenAccount, accountNumber.Trim(), StringComparison.OrdinalIgnoreCase);
     }
 }
