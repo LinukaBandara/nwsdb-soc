@@ -42,8 +42,7 @@ export default function Login({ onAuthenticated }) {
       <section className="auth-card" aria-labelledby="auth-title">
         <div className="auth-national-crest">
           <span className="flag-bar" aria-hidden="true" />
-          <span>Democratic Socialist Republic of Sri Lanka</span>
-        </div>
+</div>
 
         <div className="auth-brand">
           <div className="brand-mark" aria-hidden="true">
