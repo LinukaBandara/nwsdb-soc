@@ -131,7 +131,7 @@ export default function UsagePanel({ accountNumber, refreshTrigger }) {
                 Rs. {Number(usage.estimatedBill).toFixed(2)}
               </strong>
               <small>
-                Calculated on standard domestic block rates
+                Calculated using the assignment demonstration tariff model
               </small>
             </div>
           </div>
