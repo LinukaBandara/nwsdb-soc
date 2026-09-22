@@ -2318,3 +2318,133 @@ tbody tr:hover {
     gap: 14px;
   }
 }
+
+
+/* Real-world NWSDB presentation pass */
+.ops-brand .ops-version,
+.ops-nav-label { display:none !important; }
+
+.ops-brand {
+  padding-bottom: 26px;
+  border-bottom: 1px solid rgba(255,255,255,.08);
+  margin-bottom: 12px;
+}
+
+.ops-brand > div:nth-child(2) strong {
+  font-size: 15px;
+  letter-spacing: .02em;
+}
+
+.ops-brand > div:nth-child(2) span {
+  font-size: 10px;
+  margin-top: 3px;
+  color: #8eacbc;
+}
+
+.ops-sidebar-bottom {
+  margin-top: auto;
+  padding-top: 16px;
+  border-top: 1px solid rgba(255,255,255,.08);
+}
+
+.ops-role {
+  padding: 10px 11px;
+  border-radius: 9px;
+  background: rgba(255,255,255,.045);
+  margin-bottom: 9px;
+}
+
+.ops-signout {
+  min-height: 43px;
+  width: 100%;
+  border-radius: 9px;
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.ops-signout:hover {
+  background: rgba(214,65,65,.13);
+  color: #ffb0b0;
+}
+
+.ops-breadcrumb {
+  font-size: 12px !important;
+}
+
+.ops-page-heading h1 {
+  font-size: clamp(30px, 3vw, 40px);
+  letter-spacing: -.035em;
+  margin-bottom: 9px;
+}
+
+.ops-page-heading p:last-child {
+  font-size: 14px;
+  max-width: 850px;
+}
+
+.ops-page-heading .eyebrow {
+  font-size: 10px;
+  text-transform: uppercase;
+}
+
+.ops-kpi strong {
+  font-size: 30px;
+}
+
+.ops-kpi-top span:first-child {
+  font-size: 11px !important;
+}
+
+.ops-kpi small {
+  font-size: 11px;
+}
+
+.ops-panel-title h2 {
+  font-size: 18px;
+}
+
+.card-kicker {
+  font-size: 10px !important;
+}
+
+.ops-caption,
+.ops-period,
+.muted {
+  font-size: 11px !important;
+}
+
+.table-wrap table {
+  font-size: 12px;
+}
+
+.table-wrap table thead th {
+  font-size: 10px;
+}
+
+.table-wrap table tbody td {
+  font-size: 12px;
+  padding-top: 13px;
+  padding-bottom: 13px;
+}
+
+.ops-panel form label {
+  font-size: 11px;
+}
+
+.ops-panel form input,
+.ops-panel form select {
+  font-size: 13px;
+}
+
+.ops-live-status {
+  font-size: 11px;
+}
+
+.ops-updated {
+  font-size: 10px;
+}
+
+@media (max-width: 768px) {
+  .ops-page-heading h1 { font-size: 27px; }
+  .ops-page-heading p:last-child { font-size: 13px; }
+}
