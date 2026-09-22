@@ -45,7 +45,13 @@ export const AuthApi = {
       body: JSON.stringify({ fullName, email, password, accountNumber })
     }).then(handle),
 
-  me: () => fetch(`${IDENTITY_API}/auth/me`, authorizedOptions()).then(handle)
+  me: () => fetch(`${IDENTITY_API}/auth/me`, authorizedOptions()).then(handle),
+  users: () => fetch(`${IDENTITY_API}/auth/users`, authorizedOptions()).then(handle),
+  createUser: (payload) => fetch(`${IDENTITY_API}/auth/users`, authorizedOptions({
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  })).then(handle)
 };
 
 export const PaymentApi = {
@@ -57,7 +63,13 @@ export const PaymentApi = {
     })).then(handle),
 
   historyForAccount: (accountNumber) =>
-    fetch(`${PAYMENT_API}/payments/account/${encodeURIComponent(accountNumber)}`, authorizedOptions()).then(handle)
+    fetch(`${PAYMENT_API}/payments/account/${encodeURIComponent(accountNumber)}`, authorizedOptions()).then(handle),
+  updateStatus: (id, status) =>
+    fetch(`${PAYMENT_API}/payments/${id}/status`, authorizedOptions({
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(status)
+    })).then(handle)
 };
 
 export const UsageApi = {
@@ -65,5 +77,11 @@ export const UsageApi = {
     fetch(`${USAGE_API}/usage/${encodeURIComponent(accountNumber)}/latest`, authorizedOptions()).then(handle),
 
   history: (accountNumber) =>
-    fetch(`${USAGE_API}/usage/${encodeURIComponent(accountNumber)}/history`, authorizedOptions()).then(handle)
+    fetch(`${USAGE_API}/usage/${encodeURIComponent(accountNumber)}/history`, authorizedOptions()).then(handle),
+  record: (accountNumber, cubicMetres) =>
+    fetch(`${USAGE_API}/usage/readings`, authorizedOptions({
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ accountNumber, cubicMetres: Number(cubicMetres) })
+    })).then(handle)
 };
