@@ -3324,3 +3324,122 @@ select:focus-visible{
     font-size:14px;
   }
 }
+
+
+/* Final operations console alignment fix */
+.ops-sidebar nav{
+  display:flex;
+  flex-direction:column;
+  gap:5px;
+}
+
+.ops-sidebar nav button{
+  width:100%;
+  display:flex;
+  align-items:center;
+  justify-content:flex-start;
+  gap:11px;
+  min-height:42px;
+  margin:0;
+  padding:9px 12px;
+  text-align:left;
+}
+
+.ops-sidebar nav button .ops-icon{
+  flex:0 0 18px;
+  width:18px;
+  height:18px;
+  display:block;
+  margin:0;
+}
+
+.ops-sidebar nav button > span{
+  display:block;
+  min-width:0;
+  line-height:1.2;
+  white-space:nowrap;
+}
+
+.ops-sidebar-bottom{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+
+.ops-role{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+}
+
+.ops-signout{
+  width:100%;
+  display:flex;
+  align-items:center;
+  justify-content:flex-start;
+  gap:10px;
+  min-height:40px;
+  margin:0;
+  padding:8px 12px;
+}
+
+.ops-signout .ops-icon{
+  width:17px;
+  height:17px;
+  flex:0 0 17px;
+  display:block;
+}
+
+.ops-header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:20px;
+}
+
+.ops-breadcrumb{
+  min-width:0;
+  line-height:1.35;
+}
+
+.ops-header-user{
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:12px;
+  min-width:0;
+}
+
+.ops-header-user > div:first-child{
+  text-align:right;
+  line-height:1.25;
+}
+
+.ops-header-user > div:first-child strong,
+.ops-header-user > div:first-child span{
+  display:block;
+}
+
+.ops-header-user > div:first-child span{
+  margin-top:3px;
+}
+
+.ops-avatar{
+  display:grid;
+  place-items:center;
+  flex:0 0 36px;
+  width:36px;
+  height:36px;
+}
+
+.ops-header-signout{
+  flex:0 0 auto;
+  white-space:nowrap;
+}
+
+@media (max-width:760px){
+  .ops-header-user > div:first-child{
+    display:none;
+  }
+}
