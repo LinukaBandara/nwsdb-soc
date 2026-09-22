@@ -910,6 +910,11 @@ tbody tr:hover {
   height: 100%;
 }
 
+.tariff-segment-4 {
+  background: #075985;
+  height: 100%;
+}
+
 .tariff-labels {
   display: flex;
   justify-content: space-between;
