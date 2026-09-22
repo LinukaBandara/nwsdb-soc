@@ -52,6 +52,25 @@ npm run dev
 Swagger UI is available at `/swagger` on each service in Development mode
 for exploring and testing the API directly.
 
+## PayHere Sandbox checkout
+
+The Payment Service includes a PayHere Sandbox Checkout API integration. PayHere
+receives the checkout form directly at its Sandbox gateway; the merchant secret
+is never sent to the React client. Configure the Payment Service before testing:
+
+```powershell
+$env:PayHere__MerchantId="1238181"
+$env:PayHere__MerchantSecret="YOUR_SANDBOX_MERCHANT_SECRET"
+$env:PayHere__Sandbox="true"
+$env:PayHere__NotifyUrl="https://YOUR-PUBLIC-PAYMENT-SERVICE/api/v1/Payments/payhere/notify"
+dotnet run
+```
+
+PayHere requires the notification URL to be publicly accessible for payment
+status callbacks. On a local-only demo, the checkout can be opened through the
+Sandbox gateway, but the payment status callback cannot reach `localhost`.
+PayHere Sandbox payments are simulated and do not charge real money.
+
 ## Running with Docker Compose
 
 ```bash
