@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import Login from './components/Login';
+import PublicHome from './components/PublicHome';
 import PaymentPanel from './components/PaymentPanel';
 import UsagePanel from './components/UsagePanel';
 import { AuthApi } from './api/nwsdbApi';
@@ -14,6 +15,7 @@ export default function App() {
     }
   });
   const [checking, setChecking] = useState(Boolean(localStorage.getItem('nwsdb_token')));
+  const [authView, setAuthView] = useState('public');
   const [refreshKey, setRefreshKey] = useState(0);
   const [copied, setCopied] = useState(false);
 
@@ -51,12 +53,14 @@ export default function App() {
       accountNumber: response.accountNumber
     };
     setUser(next);
+    setAuthView('public');
   };
 
   const logout = () => {
     localStorage.removeItem('nwsdb_token');
     localStorage.removeItem('nwsdb_user');
     setUser(null);
+    setAuthView('public');
   };
 
   const copyAccountNumber = (acc) => {
@@ -82,7 +86,13 @@ export default function App() {
   }
 
   if (!user) {
-    return <Login onAuthenticated={authenticated} />;
+    if (authView === 'login') {
+      return <Login initialMode="login" onBackHome={() => setAuthView('public')} onAuthenticated={authenticated} />;
+    }
+    if (authView === 'register') {
+      return <Login initialMode="register" onBackHome={() => setAuthView('public')} onAuthenticated={authenticated} />;
+    }
+    return <PublicHome onLogin={() => setAuthView('login')} onRegister={() => setAuthView('register')} />;
   }
 
   // Staff and Admin roles are routed to the comprehensive SOC Operations Console
