@@ -284,7 +284,7 @@ export default function OperationsDashboard({ user, onLogout }) {
             <div className="ops-page-actions">
               <div className="ops-live-status">
                 <span className="live-dot" />
-                ${healthLabel}
+                {healthLabel}
               </div>
               {lastUpdated && (
                 <span className="ops-updated">
