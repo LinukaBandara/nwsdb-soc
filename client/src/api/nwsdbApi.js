@@ -105,29 +105,38 @@ export const UsageApi = {
 };
 
 export const HealthApi = {
-  checkService: async (name, baseUrl) => {
+  checkService: async (name, healthUrl) => {
     const start = (typeof performance !== 'undefined' ? performance.now() : Date.now());
     try {
-      const res = await fetch(`${baseUrl}/health`, { method: 'GET' });
+      const res = await fetch(healthUrl, { method: 'GET' });
       const duration = Math.round((typeof performance !== 'undefined' ? performance.now() : Date.now()) - start);
       if (res.ok) {
         const data = await res.json().catch(() => ({ status: 'healthy' }));
-        return { name, baseUrl, status: 'Operational', latency: duration, data, ok: true };
+        return { name, baseUrl: healthUrl, status: 'Operational', latency: duration, data, ok: true };
       }
-      return { name, baseUrl, status: `HTTP ${res.status}`, latency: duration, ok: false };
+      return { name, baseUrl: healthUrl, status: `HTTP ${res.status}`, latency: duration, ok: false };
     } catch (e) {
       const duration = Math.round((typeof performance !== 'undefined' ? performance.now() : Date.now()) - start);
-      return { name, baseUrl, status: 'Offline', latency: duration, error: e.message, ok: false };
+      return { name, baseUrl: healthUrl, status: 'Offline', latency: duration, error: e.message, ok: false };
     }
   },
   checkAll: async () => {
+    if (!import.meta.env.DEV && !import.meta.env.VITE_IDENTITY_API && !import.meta.env.VITE_PAYMENT_API && !import.meta.env.VITE_USAGE_API) {
+      const root = window.location.origin;
+      return Promise.all([
+        HealthApi.checkService('Identity Service', root + '/health/identity'),
+        HealthApi.checkService('Payment Service', root + '/health/payment'),
+        HealthApi.checkService('Usage Service', root + '/health/usage')
+      ]);
+    }
+
     const identityRoot = IDENTITY_API.replace(/\/api\/v1\/?$/, '');
     const paymentRoot = PAYMENT_API.replace(/\/api\/v1\/?$/, '');
     const usageRoot = USAGE_API.replace(/\/api\/v1\/?$/, '');
     return Promise.all([
-      HealthApi.checkService('Identity Service', identityRoot),
-      HealthApi.checkService('Payment Service', paymentRoot),
-      HealthApi.checkService('Usage Service', usageRoot)
+      HealthApi.checkService('Identity Service', identityRoot + '/health'),
+      HealthApi.checkService('Payment Service', paymentRoot + '/health'),
+      HealthApi.checkService('Usage Service', usageRoot + '/health')
     ]);
   }
 };
