@@ -1,11 +1,26 @@
 version: "3.9"
 
 services:
+  identity-svc:
+    build: ./src/IdentityService
+    container_name: nwsdb-identity-service
+    ports:
+      - "5021:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+    networks:
+      - nwsdb-net
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+
   payment-svc:
     build: ./src/PaymentService
     container_name: nwsdb-payment-service
     ports:
-      - "5001:8080"
+      - "5000:8080"
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
     networks:
@@ -20,7 +35,7 @@ services:
     build: ./src/UsageService
     container_name: nwsdb-usage-service
     ports:
-      - "5011:8080"
+      - "5010:8080"
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
     networks:
