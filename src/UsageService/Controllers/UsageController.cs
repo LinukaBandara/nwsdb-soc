@@ -31,8 +31,15 @@ public class UsageController : ControllerBase
         if (request.CubicMetres < 0)
             return BadRequest("cubicMetres cannot be negative.");
 
-        var reading = await _usageService.RecordReadingAsync(request);
-        return CreatedAtAction(nameof(GetHistory), new { accountNumber = reading.AccountNumber }, reading);
+        try
+        {
+            var reading = await _usageService.RecordReadingAsync(request);
+            return CreatedAtAction(nameof(GetHistory), new { accountNumber = reading.AccountNumber }, reading);
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(ex.Message);
+        }
     }
 
     [HttpGet("{accountNumber}/latest")]
