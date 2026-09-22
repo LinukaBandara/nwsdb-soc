@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import Login from './components/Login';
+import PublicHome from './components/PublicHome';
 import PaymentPanel from './components/PaymentPanel';
 import UsagePanel from './components/UsagePanel';
 import { AuthApi } from './api/nwsdbApi';
@@ -15,6 +16,7 @@ export default function App() {
   });
   const [checking, setChecking] = useState(Boolean(localStorage.getItem('nwsdb_token')));
   const [refreshKey, setRefreshKey] = useState(0);
+  const [authScreen, setAuthScreen] = useState(null);
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
@@ -82,7 +84,22 @@ export default function App() {
   }
 
   if (!user) {
-    return <Login onAuthenticated={authenticated} />;
+    if (!authScreen) {
+      return (
+        <PublicHome
+          onLogin={() => setAuthScreen('login')}
+          onRegister={() => setAuthScreen('register')}
+        />
+      );
+    }
+
+    return (
+      <Login
+        initialMode={authScreen}
+        onBack={() => setAuthScreen(null)}
+        onAuthenticated={authenticated}
+      />
+    );
   }
 
   // Staff and Admin roles are routed to the comprehensive SOC Operations Console
