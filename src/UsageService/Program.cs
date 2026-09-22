@@ -8,9 +8,22 @@ using NWSDB.UsageService.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-var jwtKey = builder.Configuration["Jwt:Key"] ?? "NWSDB-SOC-development-signing-key-change-for-production-2026";
-var jwtIssuer = builder.Configuration["Jwt:Issuer"] ?? "NWSDB.IdentityService";
-var jwtAudience = builder.Configuration["Jwt:Audience"] ?? "NWSDB.SOC";
+var jwtKey = builder.Configuration["Jwt:Key"]
+    ?? builder.Configuration["JWT_KEY"]
+    ?? throw new InvalidOperationException("JWT signing key is not configured. Set Jwt__Key (or JWT_KEY) in the service environment.");
+
+var jwtIssuer = builder.Configuration["Jwt:Issuer"]
+    ?? builder.Configuration["JWT_ISSUER"]
+    ?? "NWSDB.IdentityService";
+
+var jwtAudience = builder.Configuration["Jwt:Audience"]
+    ?? builder.Configuration["JWT_AUDIENCE"]
+    ?? "NWSDB.SOC";
+
+if (jwtKey.Length < 32)
+{
+    throw new InvalidOperationException("JWT signing key is too short. Configure the same strong signing key used by IdentityService.");
+}
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
@@ -49,7 +62,41 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateIssuerSigningKey = true,
             ValidIssuer = jwtIssuer,
             ValidAudience = jwtAudience,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
+            RoleClaimType = System.Security.Claims.ClaimTypes.Role,
+            NameClaimType = System.Security.Claims.ClaimTypes.Name
+        };
+
+        options.Events = new JwtBearerEvents
+        {
+            OnAuthenticationFailed = context =>
+            {
+                var logger = context.HttpContext.RequestServices
+                    .GetRequiredService<ILoggerFactory>()
+                    .CreateLogger("NWSDB.UsageService.Jwt");
+
+                logger.LogError(
+                    context.Exception,
+                    "JWT authentication failed. Issuer={Issuer}, Audience={Audience}, KeyLength={KeyLength}",
+                    jwtIssuer,
+                    jwtAudience,
+                    jwtKey.Length);
+
+                return Task.CompletedTask;
+            },
+            OnTokenValidated = context =>
+            {
+                var logger = context.HttpContext.RequestServices
+                    .GetRequiredService<ILoggerFactory>()
+                    .CreateLogger("NWSDB.UsageService.Jwt");
+
+                logger.LogInformation(
+                    "JWT validated successfully. Subject={Subject}, Role={Role}",
+                    context.Principal?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value,
+                    context.Principal?.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value);
+
+                return Task.CompletedTask;
+            }
         };
     });
 
