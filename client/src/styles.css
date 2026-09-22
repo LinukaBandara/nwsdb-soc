@@ -2705,13 +2705,7 @@ tbody tr:hover {
   background: #7dd3fc;
 }
 .public-chart-line {
-  position: absolute;
-  left: 8%;
-  right: 8%;
-  bottom: 35%;
-  height: 2px;
-  background: #075985;
-  transform: rotate(-4deg);
+  display: none;
 }
 
 .public-card-footer {
