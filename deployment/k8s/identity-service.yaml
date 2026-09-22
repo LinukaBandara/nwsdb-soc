@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: identity-service
+  namespace: nwsdb-prod
+  labels:
+    app: identity-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: identity-service
+  template:
+    metadata:
+      labels:
+        app: identity-service
+    spec:
+      containers:
+        - name: identity-service
+          image: nwsdbregistry.azurecr.io/identity-service:1.0.0
+          ports:
+            - containerPort: 8080
+          env:
+            - name: ASPNETCORE_ENVIRONMENT
+              value: "Production"
+            - name: Jwt__Key
+              value: "NWSDB-SOC-development-signing-key-change-for-production-2026"
+            - name: Jwt__Issuer
+              value: "NWSDB.IdentityService"
+            - name: Jwt__Audience
+              value: "NWSDB.SOC"
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "256Mi"
+          livenessProbe:
+            httpGet: { path: /health, port: 8080 }
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          readinessProbe:
+            httpGet: { path: /health, port: 8080 }
+            initialDelaySeconds: 5
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: identity-svc
+  namespace: nwsdb-prod
+spec:
+  selector:
+    app: identity-service
+  ports:
+    - port: 8080
+      targetPort: 8080
+  type: ClusterIP
