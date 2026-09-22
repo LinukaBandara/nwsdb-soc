@@ -1,4 +1,6 @@
 using System.Security.Claims;
+using System.Security.Cryptography;
+using System.Text;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using NWSDB.PaymentService.Models;
@@ -13,10 +15,12 @@ namespace NWSDB.PaymentService.Controllers;
 public class PaymentsController : ControllerBase
 {
     private readonly IPaymentService _paymentService;
+    private readonly IConfiguration _configuration;
 
-    public PaymentsController(IPaymentService paymentService)
+    public PaymentsController(IPaymentService paymentService, IConfiguration configuration)
     {
         _paymentService = paymentService;
+        _configuration = configuration;
     }
 
     [HttpPost]
@@ -44,6 +48,109 @@ public class PaymentsController : ControllerBase
         {
             return BadRequest(ex.Message);
         }
+    }
+
+    [HttpPost("payhere/checkout")]
+    [Authorize(Roles = "Customer,Staff,Admin")]
+    public async Task<ActionResult<PayHereCheckoutResponse>> CreatePayHereCheckout([FromBody] PayHereCheckoutRequest request)
+    {
+        if (string.IsNullOrWhiteSpace(request.AccountNumber))
+            return BadRequest("accountNumber is required.");
+        if (!CanAccessAccount(request.AccountNumber))
+            return Forbid();
+        if (request.Amount <= 0)
+            return BadRequest("Payment amount must be greater than zero.");
+
+        var merchantId = _configuration["PayHere:MerchantId"];
+        var merchantSecret = _configuration["PayHere:MerchantSecret"];
+        var sandbox = _configuration.GetValue("PayHere:Sandbox", true);
+        var notifyUrl = _configuration["PayHere:NotifyUrl"];
+
+        if (string.IsNullOrWhiteSpace(merchantId) || string.IsNullOrWhiteSpace(merchantSecret))
+            return StatusCode(StatusCodes.Status503ServiceUnavailable, "PayHere Sandbox is not configured.");
+        if (string.IsNullOrWhiteSpace(notifyUrl))
+            return StatusCode(StatusCodes.Status503ServiceUnavailable, "PayHere notify URL is not configured.");
+
+        var payment = await _paymentService.CreatePendingPaymentAsync(
+            new CreatePaymentRequest(request.AccountNumber, request.Amount, "PayHere-Sandbox"));
+
+        var orderId = payment.ReferenceNumber;
+        var amount = request.Amount.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture);
+        var hash = CreatePayHereHash(merchantId, orderId, amount, "LKR", merchantSecret);
+
+        var customerName = User.FindFirstValue(ClaimTypes.Name) ?? "NWSDB Customer";
+        var parts = customerName.Split(' ', 2, StringSplitOptions.RemoveEmptyEntries);
+        var firstName = parts.Length > 0 ? parts[0] : "NWSDB";
+        var lastName = parts.Length > 1 ? parts[1] : "Customer";
+        var email = User.FindFirstValue(ClaimTypes.Email) ?? "customer@nwsdb.local";
+        var origin = Request.Headers.Origin.FirstOrDefault();
+        var returnUrl = string.IsNullOrWhiteSpace(origin) ? "http://localhost:5173/?payhere=return&orderId=" + Uri.EscapeDataString(orderId) : $"{origin}/?payhere=return&orderId={Uri.EscapeDataString(orderId)}";
+        var cancelUrl = string.IsNullOrWhiteSpace(origin) ? "http://localhost:5173/?payhere=cancel&orderId=" + Uri.EscapeDataString(orderId) : $"{origin}/?payhere=cancel&orderId={Uri.EscapeDataString(orderId)}";
+
+        return Ok(new PayHereCheckoutResponse(
+            sandbox ? "https://sandbox.payhere.lk/pay/checkout" : "https://www.payhere.lk/pay/checkout",
+            new Dictionary<string, string>
+            {
+                ["merchant_id"] = merchantId,
+                ["return_url"] = returnUrl,
+                ["cancel_url"] = cancelUrl,
+                ["notify_url"] = notifyUrl,
+                ["first_name"] = firstName,
+                ["last_name"] = lastName,
+                ["email"] = email,
+                ["phone"] = "0770000000",
+                ["address"] = "NWSDB Customer",
+                ["city"] = "Colombo",
+                ["country"] = "Sri Lanka",
+                ["order_id"] = orderId,
+                ["items"] = $"NWSDB Water Bill - {request.AccountNumber}",
+                ["currency"] = "LKR",
+                ["amount"] = amount,
+                ["hash"] = hash,
+                ["custom_1"] = request.AccountNumber
+            }));
+    }
+
+    [AllowAnonymous]
+    [IgnoreAntiforgeryToken]
+    [HttpPost("payhere/notify")]
+    public async Task<IActionResult> PayHereNotify()
+    {
+        var form = await Request.ReadFormAsync();
+        var merchantId = form["merchant_id"].ToString();
+        var orderId = form["order_id"].ToString();
+        var amount = form["payhere_amount"].ToString();
+        var currency = form["payhere_currency"].ToString();
+        var statusCode = form["status_code"].ToString();
+        var receivedSignature = form["md5sig"].ToString();
+        var merchantSecret = _configuration["PayHere:MerchantSecret"];
+
+        if (string.IsNullOrWhiteSpace(merchantSecret) ||
+            !string.Equals(merchantId, _configuration["PayHere:MerchantId"], StringComparison.Ordinal))
+            return BadRequest();
+
+        var expectedSignature = CreatePayHereHash(merchantId, orderId, amount, currency, merchantSecret, statusCode);
+        if (!CryptographicOperations.FixedTimeEquals(Encoding.UTF8.GetBytes(expectedSignature), Encoding.UTF8.GetBytes(receivedSignature)))
+            return BadRequest();
+
+        var status = statusCode switch
+        {
+            "2" => PaymentStatus.Completed,
+            "-1" or "-2" or "-3" => PaymentStatus.Failed,
+            _ => PaymentStatus.Pending
+        };
+
+        var payment = await _paymentService.UpdateStatusByReferenceAsync(orderId, status);
+        return payment is null ? NotFound() : Ok();
+    }
+
+    private static string CreatePayHereHash(string merchantId, string orderId, string amount, string currency, string merchantSecret, string? statusCode = null)
+    {
+        var secretHash = Convert.ToHexString(MD5.HashData(Encoding.UTF8.GetBytes(merchantSecret))).ToUpperInvariant();
+        var source = statusCode is null
+            ? merchantId + orderId + amount + currency + secretHash
+            : merchantId + orderId + amount + currency + statusCode + secretHash;
+        return Convert.ToHexString(MD5.HashData(Encoding.UTF8.GetBytes(source))).ToUpperInvariant();
     }
 
     [HttpGet("{id:int}")]
@@ -100,3 +207,6 @@ public class PaymentsController : ControllerBase
 }
 
 public record UpdatePaymentStatusRequest(string Status);
+
+public record PayHereCheckoutRequest(string AccountNumber, decimal Amount);
+public record PayHereCheckoutResponse(string ActionUrl, Dictionary<string, string> Fields);
