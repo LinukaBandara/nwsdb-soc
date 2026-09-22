@@ -1,6 +1,13 @@
-const IDENTITY_API = import.meta.env.VITE_IDENTITY_API ?? 'http://localhost:5021/api/v1';
-const PAYMENT_API = import.meta.env.VITE_PAYMENT_API ?? 'http://localhost:5000/api/v1';
-const USAGE_API = import.meta.env.VITE_USAGE_API ?? 'http://localhost:5010/api/v1';
+const localApi = (envName, localUrl) => {
+  const configured = import.meta.env[envName];
+  if (configured) return configured;
+  if (import.meta.env.DEV) return localUrl;
+  return `${window.location.origin}/api/v1`;
+};
+
+const IDENTITY_API = localApi('VITE_IDENTITY_API', 'http://localhost:5021/api/v1');
+const PAYMENT_API = localApi('VITE_PAYMENT_API', 'http://localhost:5000/api/v1');
+const USAGE_API = localApi('VITE_USAGE_API', 'http://localhost:5010/api/v1');
 
 export const authToken = () => localStorage.getItem('nwsdb_token');
 
