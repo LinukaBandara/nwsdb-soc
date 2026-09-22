@@ -3,6 +3,7 @@ import Login from './components/Login';
 import PaymentPanel from './components/PaymentPanel';
 import UsagePanel from './components/UsagePanel';
 import { AuthApi } from './api/nwsdbApi';
+import OperationsDashboard from './components/OperationsDashboard';
 
 export default function App() {
   const [user, setUser] = useState(() => {
@@ -31,6 +32,10 @@ export default function App() {
 
   if (checking) return <main className="auth-page"><section className="auth-card auth-loading"><p>Checking your secure session…</p></section></main>;
   if (!user) return <Login onAuthenticated={authenticated} />;
+
+  if (user.role === 'Staff' || user.role === 'Admin') {
+    return <OperationsDashboard user={user} onLogout={logout} />;
+  }
 
   const accountNumber = user.accountNumber || 'NWSDB-0001';
 
