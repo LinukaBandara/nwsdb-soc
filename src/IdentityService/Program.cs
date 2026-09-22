@@ -5,7 +5,7 @@ using NWSDB.IdentityService.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-var key = builder.Configuration["Jwt:Key"]!;
+var key = builder.Configuration["Jwt:Key"] ?? "NWSDB-SOC-development-signing-key-change-for-production-2026";
 var issuer = builder.Configuration["Jwt:Issuer"] ?? "NWSDB.IdentityService";
 var audience = builder.Configuration["Jwt:Audience"] ?? "NWSDB.SOC";
 
@@ -44,7 +44,6 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseCors("AllowClient");
-app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 
