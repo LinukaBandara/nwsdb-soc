@@ -3,9 +3,9 @@ import { PaymentApi } from '../api/nwsdbApi';
 
 const CHANNELS = [
   { id: 'NWSDB-Portal', name: 'NWSDB Direct Portal', desc: 'Instant Clearance / Credit Card' },
-  { id: 'BankApp', name: 'Commercial Banking', desc: 'Direct Online Debit (BOC, Sampath, HNB)' },
-  { id: 'eZCash', name: 'eZ Cash Mobile', desc: 'Dialog & Telco Mobile Wallet' },
-  { id: 'FrimiWallet', name: 'FriMi Digital', desc: 'Nations Trust Digital Banking' }
+  { id: 'BankApp', name: 'Commercial Bank Digital', desc: 'Open ComBank Digital portal', url: 'https://www.combankdigital.com/' },
+  { id: 'eZCash', name: 'eZ Cash Mobile', desc: 'Open official eZ Cash service', url: 'https://www.ezcash.lk/' },
+  { id: 'FrimiWallet', name: 'FriMi Digital', desc: 'Open official FriMi service', url: 'https://www.frimi.lk/' }
 ];
 
 export default function PaymentPanel({ accountNumber, onPaymentSuccess }) {
@@ -40,6 +40,17 @@ export default function PaymentPanel({ accountNumber, onPaymentSuccess }) {
     const numericAmount = Number(amount);
     if (!numericAmount || numericAmount <= 0) {
       setStatus({ ok: false, message: 'Please specify an amount greater than zero.' });
+      return;
+    }
+
+    const selectedChannel = CHANNELS.find((item) => item.id === channel);
+
+    if (selectedChannel?.url) {
+      window.open(selectedChannel.url, '_blank', 'noopener,noreferrer');
+      setStatus({
+        ok: true,
+        message: `Opening ${selectedChannel.name}. Complete the payment in the external portal, then return here to continue.`
+      });
       return;
     }
 
@@ -149,7 +160,7 @@ export default function PaymentPanel({ accountNumber, onPaymentSuccess }) {
         )}
 
         <button type="submit" disabled={loading} className="btn-blue" style={{ minWidth: '180px' }}>
-          {loading ? 'Processing Transaction…' : `Pay Rs. ${amount ? Number(amount).toFixed(2) : '0.00'} Now`}
+          {loading ? 'Processing Transaction…' : CHANNELS.find((item) => item.id === channel)?.url ? `Open ${CHANNELS.find((item) => item.id === channel)?.name}` : `Pay Rs. ${amount ? Number(amount).toFixed(2) : '0.00'} Now`}
         </button>
       </form>
 
