@@ -6,7 +6,9 @@ metadata:
   labels:
     app: identity-service
 spec:
-  replicas: 2
+  # The assignment uses an in-memory identity store. Keep one replica until
+  # a shared persistent identity database is introduced.
+  replicas: 1
   selector:
     matchLabels:
       app: identity-service
@@ -24,7 +26,10 @@ spec:
             - name: ASPNETCORE_ENVIRONMENT
               value: "Production"
             - name: Jwt__Key
-              value: "NWSDB-SOC-development-signing-key-change-for-production-2026"
+              valueFrom:
+                secretKeyRef:
+                  name: nwsdb-jwt
+                  key: key
             - name: Jwt__Issuer
               value: "NWSDB.IdentityService"
             - name: Jwt__Audience
