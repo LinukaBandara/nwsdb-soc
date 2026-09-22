@@ -40,6 +40,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Build Identity Service image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./src/IdentityService/Dockerfile
+          push: false
+          tags: nwsdb-identity-service:assignment
+
       - name: Build Payment Service image
         uses: docker/build-push-action@v6
         with:
