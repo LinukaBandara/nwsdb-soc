@@ -1,7 +1,7 @@
 version: "3.9"
 
 services:
-  payment-service:
+  payment-svc:
     build: ./src/PaymentService
     container_name: nwsdb-payment-service
     ports:
@@ -16,7 +16,7 @@ services:
       timeout: 3s
       retries: 3
 
-  usage-service:
+  usage-svc:
     build: ./src/UsageService
     container_name: nwsdb-usage-service
     ports:
@@ -37,8 +37,8 @@ services:
     ports:
       - "8080:80"
     depends_on:
-      - payment-service
-      - usage-service
+      - payment-svc
+      - usage-svc
     networks:
       - nwsdb-net
 

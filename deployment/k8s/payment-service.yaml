@@ -23,11 +23,6 @@ spec:
           env:
             - name: ASPNETCORE_ENVIRONMENT
               value: "Production"
-            - name: ConnectionStrings__PaymentDb
-              valueFrom:
-                secretKeyRef:
-                  name: payment-db-secret
-                  key: connectionString
           resources:
             requests:
               cpu: "100m"
@@ -53,7 +48,7 @@ spec:
   selector:
     app: payment-service
   ports:
-    - port: 80
+    - port: 8080
       targetPort: 8080
   type: ClusterIP
 ---

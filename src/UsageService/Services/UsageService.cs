@@ -14,11 +14,18 @@ public class UsageService : IUsageService
 
     public async Task<MeterReading> RecordReadingAsync(RecordReadingRequest request)
     {
+        if (string.IsNullOrWhiteSpace(request.AccountNumber))
+            throw new ArgumentException("Account number is required.");
+
+        if (request.CubicMetres < 0)
+            throw new ArgumentException("Cubic metres cannot be negative.");
+
         var reading = new MeterReading
         {
-            AccountNumber = request.AccountNumber,
+            AccountNumber = request.AccountNumber.Trim(),
             CubicMetres = request.CubicMetres
         };
+
         _db.Readings.Add(reading);
         await _db.SaveChangesAsync();
         return reading;
@@ -50,9 +57,8 @@ public class UsageService : IUsageService
             .ToListAsync();
 
     /// <summary>
-    /// Simplified tiered tariff, modelled loosely on NWSDB's published
-    /// domestic tariff structure (increasing rate per block of consumption).
-    /// Kept as a pure function so it is trivially unit-testable in isolation.
+    /// Calculates an estimated bill using a simplified tiered tariff
+    /// for demonstration and testing purposes.
     /// </summary>
     public static decimal CalculateBill(double unitsConsumed)
     {

@@ -1,9 +1,9 @@
 # NWSDB Service-Oriented Solution
 
 A Service-Oriented Computing (SOC) solution for the Sri Lanka National Water
-Supply and Drainage Board (NWSDB) case study — CSE5013 WRIT1.
+Supply & Drainage Board (NWSDB) case study — CSE5013 WRIT1.
 
-Two independently deployable **.NET 8 Web API** services (Payment Service,
+Two independently deployable **.NET 10 Web API** services (Payment Service,
 Usage Service), each owning its own data store, consumed by a **React**
 client application and available for third-party partner integration over
 a standard REST/JSON contract.
@@ -14,21 +14,21 @@ a standard REST/JSON contract.
 NWSDB-SOC/
 ├── NWSDB-SOC.sln
 ├── src/
-│   ├── PaymentService/      # .NET 8 Web API — bill payments
-│   └── UsageService/        # .NET 8 Web API — meter readings & billing
+│   ├── PaymentService/      # .NET 10 Web API — bill payments
+│   └── UsageService/       # .NET 10 Web API — meter readings & billing
 ├── tests/
 │   ├── PaymentService.Tests/   # xUnit unit + integration tests
 │   └── UsageService.Tests/
 ├── client/                  # React (Vite) client consuming both APIs
 ├── deployment/k8s/          # Kubernetes manifests
 ├── docker-compose.yml       # Local multi-container orchestration
-├── .github/workflows/       # CI/CD pipeline (GitHub Actions)
+├── .github/workflows/       # GitHub Actions CI workflow
 └── docs/                    # Architecture diagrams (source + rendered)
 ```
 
 ## Prerequisites
 
-- .NET 8 SDK
+- .NET 10 SDK
 - Node.js 18+ and npm
 - Docker Desktop (optional, for containerised run)
 
@@ -52,6 +52,25 @@ npm run dev
 Swagger UI is available at `/swagger` on each service in Development mode
 for exploring and testing the API directly.
 
+## PayHere Sandbox checkout
+
+The Payment Service includes a PayHere Sandbox Checkout API integration. PayHere
+receives the checkout form directly at its Sandbox gateway; the merchant secret
+is never sent to the React client. Configure the Payment Service before testing:
+
+```powershell
+$env:PayHere__MerchantId="1238181"
+$env:PayHere__MerchantSecret="YOUR_SANDBOX_MERCHANT_SECRET"
+$env:PayHere__Sandbox="true"
+$env:PayHere__NotifyUrl="https://YOUR-PUBLIC-PAYMENT-SERVICE/api/v1/Payments/payhere/notify"
+dotnet run
+```
+
+PayHere requires the notification URL to be publicly accessible for payment
+status callbacks. On a local-only demo, the checkout can be opened through the
+Sandbox gateway, but the payment status callback cannot reach `localhost`.
+PayHere Sandbox payments are simulated and do not charge real money.
+
 ## Running with Docker Compose
 
 ```bash
@@ -60,6 +79,8 @@ docker compose up --build
 
 This builds and starts all three containers on a shared bridge network:
 Payment Service on `:5001`, Usage Service on `:5011`, client on `:8080`.
+The React client uses the Nginx container to proxy `/api/v1/payments` to
+the Payment Service and `/api/v1/usage` to the Usage Service.
 
 ## Running the automated tests
 
@@ -67,16 +88,34 @@ Payment Service on `:5001`, Usage Service on `:5011`, client on `:8080`.
 dotnet test NWSDB-SOC.sln
 ```
 
-This runs both the `PaymentService.Tests` and `UsageService.Tests` projects
-(unit tests against the service layer with an in-memory EF Core provider,
-plus integration tests against the full HTTP pipeline via
-`WebApplicationFactory`).
+The test suite covers:
+- Payment service business logic
+- Usage service business logic
+- Validation and error cases
+- Payment API HTTP responses
+- API health-check behaviour
+- Account-specific payment history
 
-## Deploying to Kubernetes
+The tests use an EF Core in-memory provider and `WebApplicationFactory`
+for HTTP integration testing. The current suite contains **17 automated
+tests**.
+
+## Deployment reference
+
+Kubernetes manifests are provided as a deployment design/reference for the
+assignment. They define separate Deployments and Services for the Payment
+and Usage services, health probes, and horizontal scaling configuration.
 
 ```bash
 kubectl create namespace nwsdb-prod
 kubectl apply -f deployment/k8s/
 ```
 
-See the accompanying report (Task 4) for the full deployment rationale.
+The repository does not claim a live Kubernetes cluster or production payment
+gateway. Payment gateway processing is simulated for the academic
+demonstration, and the services currently use EF Core InMemory storage.
+
+## Diagrams
+
+The `docs/diagrams` directory contains the architecture, use-case, activity,
+class, ER, and deployment diagrams used to explain the solution design.

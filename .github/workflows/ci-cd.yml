@@ -1,10 +1,11 @@
-name: NWSDB SOC CI/CD
+name: NWSDB SOC CI
 
 on:
   push:
     branches: [ main ]
   pull_request:
     branches: [ main ]
+  workflow_dispatch:
 
 jobs:
   build-and-test:
@@ -15,7 +16,7 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '8.0.x'
+          dotnet-version: '10.0.x'
 
       - name: Restore
         run: dotnet restore NWSDB-SOC.sln
@@ -23,7 +24,7 @@ jobs:
       - name: Build
         run: dotnet build NWSDB-SOC.sln --no-restore -c Release
 
-      - name: Run unit & integration tests
+      - name: Run unit and integration tests
         run: dotnet test NWSDB-SOC.sln --no-build -c Release --logger "trx" --results-directory ./TestResults
 
       - name: Publish test results
@@ -33,47 +34,29 @@ jobs:
           name: test-results
           path: ./TestResults
 
-  build-and-push-images:
+  build-container-images:
     needs: build-and-test
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
     steps:
       - uses: actions/checkout@v4
 
-      - name: Log in to container registry
-        uses: docker/login-action@v3
-        with:
-          registry: nwsdbregistry.azurecr.io
-          username: ${{ secrets.REGISTRY_USERNAME }}
-          password: ${{ secrets.REGISTRY_PASSWORD }}
-
-      - name: Build & push Payment Service
-        uses: docker/build-push-action@v5
+      - name: Build Payment Service image
+        uses: docker/build-push-action@v6
         with:
           context: ./src/PaymentService
-          push: true
-          tags: nwsdbregistry.azurecr.io/payment-service:${{ github.sha }}
+          push: false
+          tags: nwsdb-payment-service:assignment
 
-      - name: Build & push Usage Service
-        uses: docker/build-push-action@v5
+      - name: Build Usage Service image
+        uses: docker/build-push-action@v6
         with:
           context: ./src/UsageService
-          push: true
-          tags: nwsdbregistry.azurecr.io/usage-service:${{ github.sha }}
+          push: false
+          tags: nwsdb-usage-service:assignment
 
-      - name: Build & push Client App
-        uses: docker/build-push-action@v5
+      - name: Build Client image
+        uses: docker/build-push-action@v6
         with:
           context: ./client
-          push: true
-          tags: nwsdbregistry.azurecr.io/client-app:${{ github.sha }}
-
-  deploy:
-    needs: build-and-push-images
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
-    steps:
-      - uses: actions/checkout@v4
-      - name: Deploy to Kubernetes
-        run: |
-          echo "kubectl apply -f deployment/k8s/ (configured with cluster credentials in production)"
+          push: false
+          tags: nwsdb-client:assignment

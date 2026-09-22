@@ -1,0 +1,28 @@
+services:
+  - type: web
+    name: nwsdb-payment-service
+    runtime: docker
+    plan: free
+    region: singapore
+    branch: assignment-task2-cleanup
+    autoDeployTrigger: commit
+    dockerfilePath: ./src/PaymentService/Dockerfile
+    dockerContext: ./src/PaymentService
+    healthCheckPath: /health
+    envVars:
+      - key: PORT
+        value: "10000"
+      - key: Jwt__Key
+        sync: false
+      - key: Jwt__Issuer
+        value: NWSDB.IdentityService
+      - key: Jwt__Audience
+        value: NWSDB.SOC
+      - key: PayHere__MerchantId
+        sync: false
+      - key: PayHere__MerchantSecret
+        sync: false
+      - key: PayHere__Sandbox
+        value: "true"
+      - key: PayHere__NotifyUrl
+        sync: false
