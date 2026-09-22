@@ -52,6 +52,45 @@ public class AuthController(
         return Ok(CreateResponse(user));
     }
 
+    [Authorize(Roles = "Admin")]
+    [HttpGet("users")]
+    public ActionResult<IEnumerable<object>> GetUsers()
+    {
+        return Ok(users.GetAll().Select(u => new
+        {
+            id = u.Id,
+            fullName = u.FullName,
+            email = u.Email,
+            role = u.Role,
+            accountNumber = u.AccountNumber
+        }));
+    }
+
+    [Authorize(Roles = "Admin")]
+    [HttpPost("users")]
+    [ProducesResponseType(typeof(AuthResponse), StatusCodes.Status201Created)]
+    public ActionResult<AuthResponse> CreateManagedUser(CreateManagedUserRequest request)
+    {
+        if (string.IsNullOrWhiteSpace(request.FullName) ||
+            string.IsNullOrWhiteSpace(request.Email) ||
+            string.IsNullOrWhiteSpace(request.Password) ||
+            string.IsNullOrWhiteSpace(request.Role))
+            return BadRequest("Full name, email, password and role are required.");
+
+        if (request.Password.Length < 6)
+            return BadRequest("Password must contain at least 6 characters.");
+
+        try
+        {
+            var user = users.CreateManagedUser(request);
+            return Created("", CreateResponse(user));
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ex.Message);
+        }
+    }
+
     [Authorize]
     [HttpGet("me")]
     [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
