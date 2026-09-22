@@ -2576,3 +2576,38 @@ tbody tr:hover {
     padding: 12px 16px;
   }
 }
+
+
+/* Align operations navigation icons and labels */
+.ops-sidebar nav button {
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr);
+  align-items: center;
+  column-gap: 10px;
+  min-height: 42px;
+  box-sizing: border-box;
+}
+
+.ops-sidebar nav button .ops-icon {
+  width: 18px;
+  height: 18px;
+  display: block;
+  margin: 0 auto;
+}
+
+.ops-sidebar nav button > span {
+  min-width: 0;
+  line-height: 1.25;
+  white-space: nowrap;
+}
+
+.ops-sidebar-bottom .ops-signout {
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr);
+  align-items: center;
+  column-gap: 10px;
+}
+
+.ops-sidebar-bottom .ops-signout .ops-icon {
+  margin: 0 auto;
+}
