@@ -48,18 +48,18 @@ export default function UsagePanel({ accountNumber, refreshTrigger }) {
 
   const units = Number(usage?.unitsConsumed || 0);
 
-  // Sri Lanka NWSDB Domestic Tariff Blocks calculation approximation:
-  // Tier 1: 0 - 15 m³
-  // Tier 2: 16 - 25 m³
-  // Tier 3: > 25 m³
-  const tier1 = Math.min(units, 15);
-  const tier2 = Math.max(0, Math.min(units - 15, 10));
-  const tier3 = Math.max(0, units - 25);
+  // Assignment demonstration tariff blocks — kept consistent with the Usage Service calculation.
+  // Block 1: 0 - 10 m³, Block 2: 11 - 20 m³, Block 3: 21 - 30 m³, Block 4: > 30 m³
+  const tier1 = Math.min(units, 10);
+  const tier2 = Math.max(0, Math.min(units - 10, 10));
+  const tier3 = Math.max(0, Math.min(units - 20, 10));
+  const tier4 = Math.max(0, units - 30);
   const totalUnits = Math.max(units, 1);
 
   const pct1 = Math.round((tier1 / totalUnits) * 100);
   const pct2 = Math.round((tier2 / totalUnits) * 100);
   const pct3 = Math.round((tier3 / totalUnits) * 100);
+  const pct4 = Math.round((tier4 / totalUnits) * 100);
 
   return (
     <section className="card" aria-labelledby="usage-heading">
@@ -145,23 +145,29 @@ export default function UsagePanel({ accountNumber, refreshTrigger }) {
               <div
                 className="tariff-segment-1"
                 style={{ width: `${pct1}%` }}
-                title={`Block 1 (0-15 m³): ${tier1} units`}
+                title={`Block 1 (0-10 m³): ${tier1} units`}
               />
               <div
                 className="tariff-segment-2"
                 style={{ width: `${pct2}%` }}
-                title={`Block 2 (16-25 m³): ${tier2} units`}
+                title={`Block 2 (11-20 m³): ${tier2} units`}
               />
               <div
                 className="tariff-segment-3"
                 style={{ width: `${pct3}%` }}
-                title={`Block 3 (>25 m³): ${tier3} units`}
+                title={`Block 3 (21-30 m³): ${tier3} units`}
+              />
+              <div
+                className="tariff-segment-4"
+                style={{ width: `${pct4}%` }}
+                title={`Block 4 (>30 m³): ${tier4} units`}
               />
             </div>
             <div className="tariff-labels">
-              <span>Block 1: {tier1} m³ (Base rate)</span>
-              <span>Block 2: {tier2} m³ (Tier 2 rate)</span>
-              <span>Block 3: {tier3} m³ (Tier 3 rate)</span>
+              <span>Block 1: {tier1} m³ (Rs. 15/unit)</span>
+              <span>Block 2: {tier2} m³ (Rs. 30/unit)</span>
+              <span>Block 3: {tier3} m³ (Rs. 60/unit)</span>
+              <span>Block 4: {tier4} m³ (Rs. 100/unit)</span>
             </div>
           </div>
 
