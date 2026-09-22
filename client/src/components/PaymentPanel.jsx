@@ -3,9 +3,7 @@ import { PaymentApi } from '../api/nwsdbApi';
 
 const CHANNELS = [
   { id: 'NWSDB-Portal', name: 'NWSDB Direct Portal', desc: 'Instant Clearance / Credit Card' },
-  { id: 'BankApp', name: 'Commercial Bank Digital', desc: 'Open ComBank Digital portal', url: 'https://www.combankdigital.com/' },
-  { id: 'eZCash', name: 'eZ Cash Mobile', desc: 'Open official eZ Cash service', url: 'https://www.ezcash.lk/' },
-  { id: 'PayHere', name: 'PayHere Sandbox', desc: 'Secure PayHere test checkout' }
+  { id: 'PayHere', name: 'PayHere Sandbox', desc: 'Secure multi-method payment checkout' }
 ];
 
 export default function PaymentPanel({ accountNumber, onPaymentSuccess }) {
@@ -64,15 +62,6 @@ export default function PaymentPanel({ accountNumber, onPaymentSuccess }) {
 
         document.body.appendChild(form);
         form.submit();
-        return;
-      }
-
-      if (selectedChannel?.url) {
-        window.open(selectedChannel.url, '_blank', 'noopener,noreferrer');
-        setStatus({
-          ok: true,
-          message: `Opening ${selectedChannel.name}. Complete the payment in the external portal, then return here to continue.`
-        });
         return;
       }
 
@@ -180,7 +169,7 @@ export default function PaymentPanel({ accountNumber, onPaymentSuccess }) {
         )}
 
         <button type="submit" disabled={loading} className="btn-blue" style={{ minWidth: '180px' }}>
-          {loading ? 'Opening Secure Checkout…' : channel === 'PayHere' ? 'Continue to PayHere' : CHANNELS.find((item) => item.id === channel)?.url ? `Open ${CHANNELS.find((item) => item.id === channel)?.name}` : `Pay Rs. ${amount ? Number(amount).toFixed(2) : '0.00'} Now`}
+          {loading ? (channel === 'PayHere' ? 'Opening Secure Checkout…' : 'Processing Transaction…') : channel === 'PayHere' ? 'Continue to PayHere' : `Pay Rs. ${amount ? Number(amount).toFixed(2) : '0.00'} Now`}
         </button>
       </form>
 
