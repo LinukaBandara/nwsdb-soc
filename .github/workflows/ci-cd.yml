@@ -2,9 +2,9 @@ name: NWSDB SOC CI
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, assignment-task2-cleanup ]
   pull_request:
-    branches: [ main ]
+    branches: [ main, assignment-task2-cleanup ]
   workflow_dispatch:
 
 jobs:
@@ -51,14 +51,16 @@ jobs:
       - name: Build Payment Service image
         uses: docker/build-push-action@v6
         with:
-          context: ./src/PaymentService
+          context: .
+          file: ./src/PaymentService/Dockerfile
           push: false
           tags: nwsdb-payment-service:assignment
 
       - name: Build Usage Service image
         uses: docker/build-push-action@v6
         with:
-          context: ./src/UsageService
+          context: .
+          file: ./src/UsageService/Dockerfile
           push: false
           tags: nwsdb-usage-service:assignment
 
