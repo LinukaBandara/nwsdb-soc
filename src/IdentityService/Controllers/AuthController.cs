@@ -21,9 +21,7 @@ public class AuthController(
             string.IsNullOrWhiteSpace(request.Email) ||
             string.IsNullOrWhiteSpace(request.Password) ||
             string.IsNullOrWhiteSpace(request.AccountNumber))
-        {
             return BadRequest("Full name, email, password and account number are required.");
-        }
 
         if (request.Password.Length < 6)
             return BadRequest("Password must contain at least 6 characters.");
@@ -58,7 +56,9 @@ public class AuthController(
         return Ok(CreateResponse(user));
     }
 
-    [Authorize(Roles = "Admin")]
+    // Staff need read-only account visibility for operational lookups.
+    // Only Admin can provision accounts through POST /users.
+    [Authorize(Roles = "Staff,Admin")]
     [HttpGet("users")]
     public ActionResult<IEnumerable<object>> GetUsers()
     {
