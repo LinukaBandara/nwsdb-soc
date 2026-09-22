@@ -6,7 +6,9 @@ metadata:
   labels:
     app: payment-service
 spec:
-  replicas: 3
+  # Payment data is currently stored in EF Core InMemory; multiple replicas
+  # would create separate data stores. Use one replica until PostgreSQL is introduced.
+  replicas: 1
   selector:
     matchLabels:
       app: payment-service
@@ -23,6 +25,15 @@ spec:
           env:
             - name: ASPNETCORE_ENVIRONMENT
               value: "Production"
+            - name: Jwt__Key
+              valueFrom:
+                secretKeyRef:
+                  name: nwsdb-jwt
+                  key: key
+            - name: Jwt__Issuer
+              value: "NWSDB.IdentityService"
+            - name: Jwt__Audience
+              value: "NWSDB.SOC"
           resources:
             requests:
               cpu: "100m"
@@ -51,23 +62,3 @@ spec:
     - port: 8080
       targetPort: 8080
   type: ClusterIP
----
-apiVersion: autoscaling/v2
-kind: HorizontalPodAutoscaler
-metadata:
-  name: payment-service-hpa
-  namespace: nwsdb-prod
-spec:
-  scaleTargetRef:
-    apiVersion: apps/v1
-    kind: Deployment
-    name: payment-service
-  minReplicas: 3
-  maxReplicas: 10
-  metrics:
-    - type: Resource
-      resource:
-        name: cpu
-        target:
-          type: Utilization
-          averageUtilization: 70
