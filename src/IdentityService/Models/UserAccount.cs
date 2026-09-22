@@ -22,3 +22,11 @@ public record AuthResponse(
     string Email,
     string Role,
     string? AccountNumber);
+
+
+public record CreateManagedUserRequest(
+    string FullName,
+    string Email,
+    string Password,
+    string Role,
+    string? AccountNumber);
