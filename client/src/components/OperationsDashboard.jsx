@@ -96,13 +96,13 @@ export default function OperationsDashboard({ user, onLogout }) {
 
       const failures = results.filter((r) => r.status === 'rejected');
       if (failures.length === results.length) {
-        throw new Error(failures[0].reason?.message || 'Failed to connect to microservices.');
+        throw new Error(failures[0].reason?.message || 'Unable to retrieve account information.');
       }
       if (failures.length > 0) {
-        setMessage(`Account ${value} partially loaded. Some microservice telemetry unavailable.`);
+        setMessage(`Account ${value} partially loaded. Some account information is temporarily unavailable.`);
       }
     } catch (e) {
-      setError(e.message || 'Error loading account data.');
+      setError(e.message || 'Unable to load this customer account.');
       setUsage(null);
       setUsageHistory([]);
       setPayments([]);
@@ -137,7 +137,7 @@ export default function OperationsDashboard({ user, onLogout }) {
       setMessage(`Meter reading ${res.cubicMetres} m³ recorded successfully.`);
       await loadAccount(selectedAccount);
     } catch (e) {
-      setError(e.message || 'Error recording meter reading.');
+      setError(e.message || 'Unable to save the meter reading.');
     }
   };
 
@@ -146,10 +146,10 @@ export default function OperationsDashboard({ user, onLogout }) {
     setMessage('');
     try {
       await PaymentApi.updateStatus(id, status);
-      setMessage(`Payment #${id} has been marked as ${status}.`);
+      setMessage(`Payment #${id} has been updated to ${status}.`);
       await loadAccount(selectedAccount);
     } catch (e) {
-      setError(e.message || 'Failed to update payment status.');
+      setError(e.message || 'Unable to update the payment.');
     }
   };
 
@@ -163,7 +163,7 @@ export default function OperationsDashboard({ user, onLogout }) {
       setMessage(`User account ${newUser.email} created successfully.`);
       await loadUsers();
     } catch (e) {
-      setError(e.message || 'Failed to create user account.');
+      setError(e.message || 'Unable to create the user account.');
     }
   };
 
@@ -189,32 +189,32 @@ export default function OperationsDashboard({ user, onLogout }) {
 
   const nav = [
     ['dashboard', 'Overview', 'grid'],
-    ['customers', 'Customer Workspace', 'users'],
+    ['customers', 'Customer Accounts', 'users'],
     ['usage', 'Usage & Metering', 'water'],
     ['payments', 'Payments', 'card'],
-    ['readings', 'Record Readings', 'meter'],
-    ...(isAdmin ? [['users', 'User Directory', 'shield']] : []),
-    ['settings', 'Microservices & Health', 'settings']
+    ['readings', 'Meter Readings', 'meter'],
+    ...(isAdmin ? [['users', 'User Management', 'shield']] : []),
+    ['settings', 'Service Status', 'settings']
   ];
 
   const title = {
-    dashboard: 'Operations & Service Overview',
-    customers: 'Customer Account Overview',
-    usage: 'Meter Usage & Billing',
+    dashboard: 'Service Overview',
+    customers: 'Customer Accounts',
+    usage: 'Water Usage & Billing',
     payments: 'Payments & Approvals',
-    readings: 'Meter Reading Field Entry',
+    readings: 'Meter Readings',
     users: 'User Management',
-    settings: 'Microservice Health & Gateway Architecture'
+    settings: 'Service Status'
   }[active];
 
   const subtitle = {
-    dashboard: 'Monitor customer accounts, usage, payments, and service health from one operations console.',
+    dashboard: 'A clear view of customer activity, water consumption, payments, and the services supporting daily operations.',
     customers: 'Search customer accounts, review usage history, and inspect account activity.',
     usage: 'Review meter readings, consumption history, and calculated billing information.',
     payments: 'Review payment records, clear pending transactions, and inspect payment channels.',
     readings: 'Record meter readings with clear previous-value and consumption checks.',
     users: 'Create and review system accounts with role-based access.',
-    settings: 'Live connectivity status and health probes for Payment, Usage, and Identity APIs.'
+    settings: 'Check the availability of the services supporting customer accounts, payments, and water usage.'
   }[active];
 
   return (
@@ -337,7 +337,7 @@ export default function OperationsDashboard({ user, onLogout }) {
                     <span className="kpi-icon">≈</span>
                   </div>
                   <strong>{usageHistory.length}</strong>
-                  <small>Telemetry for {selectedAccount}</small>
+                  <small>Recent readings for {selectedAccount}</small>
                 </div>
 
                 <div className="ops-kpi">
@@ -388,7 +388,7 @@ export default function OperationsDashboard({ user, onLogout }) {
                     </div>
                   ) : (
                     <div className="ops-empty">
-                      Select or search an account to populate telemetry charts.
+                      Select a customer account to view recent water usage and payment activity.
                     </div>
                   )}
                 </section>
@@ -418,7 +418,7 @@ export default function OperationsDashboard({ user, onLogout }) {
 
                   {customerAccounts.length > 0 && (
                     <div style={{ marginTop: '14px' }}>
-                      <span className="card-kicker">Known Registered Accounts</span>
+                      <span className="card-kicker">Customer Accounts</span>
                       <div className="customer-quick-picker">
                         {customerAccounts.slice(0, 5).map((c) => (
                           <button
@@ -463,6 +463,32 @@ export default function OperationsDashboard({ user, onLogout }) {
                   </button>
                 </div>
                 <PaymentTable payments={payments.slice(0, 5)} onComplete={updatePaymentStatus} />
+              </section>
+
+              <section className="ops-panel ops-service-summary">
+                <div className="ops-panel-title">
+                  <div>
+                    <span className="card-kicker">Service Status</span>
+                    <h2>Customer Service Availability</h2>
+                  </div>
+                  <button type="button" className="btn-secondary" onClick={runHealthCheck} disabled={healthLoading}>
+                    {healthLoading ? 'Checking…' : 'Refresh Status'}
+                  </button>
+                </div>
+                <div className="ops-service-summary-grid">
+                  {healthStatus.map((service) => (
+                    <div className="ops-service-summary-card" key={service.name}>
+                      <div className="ops-service-summary-icon">
+                        <Icon name={service.name.includes('Usage') ? 'water' : service.name.includes('Payment') ? 'card' : 'shield'} />
+                      </div>
+                      <div>
+                        <strong>{service.name}</strong>
+                        <span>{service.ok ? 'Service is available and responding normally.' : 'Service is currently unavailable.'}</span>
+                      </div>
+                      <StatusPill status={service.ok ? 'Available' : 'Unavailable'} />
+                    </div>
+                  ))}
+                </div>
               </section>
             </>
           )}
@@ -756,9 +782,9 @@ function ReadingWorkspace({ usageHistory, selectedAccount, reading, setReading, 
         <div className="ops-panel-title">
           <div>
             <span className="card-kicker">Meter Reading</span>
-            <h2>Record Certified Meter Index</h2>
+            <h2>Record Meter Reading</h2>
           </div>
-          <StatusPill status="Staff / Admin Access" />
+          <StatusPill status="Authorized Staff" />
         </div>
 
         {selectedAccount ? (
@@ -981,10 +1007,10 @@ function SystemWorkspace({ isAdmin, user, healthStatus, healthLoading, onRefresh
                 <div className={`service-dot ${s.ok ? '' : 'dot-offline'}`} />
                 <div className="service-info">
                   <strong>{s.name}</strong>
-                  <span>{s.baseUrl}</span>
+                  <span>{s.ok ? 'Available' : 'Currently unavailable'}</span>
                 </div>
                 <div className="service-latency">
-                  {s.latency} ms roundtrip
+                  {s.latency} ms response
                 </div>
                 <div>
                   <StatusPill status={s.status} />
@@ -993,7 +1019,7 @@ function SystemWorkspace({ isAdmin, user, healthStatus, healthLoading, onRefresh
             ))
           ) : (
             <div className="ops-empty">
-              Probing Identity, Payment, and Usage microservices…
+              Checking service availability…
             </div>
           )}
         </div>
@@ -1005,13 +1031,13 @@ function SystemWorkspace({ isAdmin, user, healthStatus, healthLoading, onRefresh
             <span className="card-kicker">Account Access</span>
             <h2>Signed-in Account</h2>
           </div>
-          <StatusPill status="JWT Authenticated" />
+          <StatusPill status="Signed In" />
         </div>
         <div className="ops-detail-list">
-          <div><span>Operator Identity</span><strong>{user.fullName} ({user.email})</strong></div>
-          <div><span>Assigned Role</span><strong>{user.role}</strong></div>
+          <div><span>Account</span><strong>{user.fullName} ({user.email})</strong></div>
+          <div><span>Role</span><strong>{user.role}</strong></div>
           <div><span>Access Level</span><strong>{isAdmin ? 'Administrator' : 'Staff Operator'}</strong></div>
-          <div><span>Administrative Privileges</span><strong>{isAdmin ? 'Granted (Full Access)' : 'Standard Staff Operations'}</strong></div>
+          <div><span>Access Permissions</span><strong>{isAdmin ? 'Granted (Full Access)' : 'Standard Staff Operations'}</strong></div>
           <div><span>Service Access</span><strong>Customer, payment and water-service operations</strong></div>
           <div><span>Session Status</span><strong>Secure and active</strong></div>
         </div>
@@ -1050,7 +1076,7 @@ function PaymentTable({ payments, onComplete }) {
                       type="button"
                       onClick={() => onComplete(p.id, 'Completed')}
                     >
-                      Clear & Approve
+                      Approve Payment
                     </button>
                   ) : (
                     <span className="muted" style={{ fontSize: '11px' }}>Processed</span>
