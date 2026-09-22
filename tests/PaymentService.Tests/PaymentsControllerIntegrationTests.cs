@@ -1,24 +1,36 @@
 using System.Net;
 using System.Net.Http.Json;
+using System.Security.Claims;
+using System.Text.Encodings.Web;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using NWSDB.PaymentService.Models;
 using Xunit;
 
 namespace PaymentService.Tests;
 
-/// <summary>
-/// End-to-end tests that spin up the actual ASP.NET Core pipeline
-/// (routing, model binding, DI, middleware) via WebApplicationFactory,
-/// proving the API contract works as consumers will actually call it —
-/// this is the "testing results" evidence for Task 3.
-/// </summary>
 public class PaymentsControllerIntegrationTests : IClassFixture<WebApplicationFactory<Program>>
 {
     private readonly HttpClient _client;
 
     public PaymentsControllerIntegrationTests(WebApplicationFactory<Program> factory)
     {
-        _client = factory.CreateClient();
+        var testFactory = factory.WithWebHostBuilder(builder =>
+        {
+            builder.ConfigureServices(services =>
+            {
+                services.AddAuthentication(options =>
+                {
+                    options.DefaultAuthenticateScheme = TestAuthHandler.SchemeName;
+                    options.DefaultChallengeScheme = TestAuthHandler.SchemeName;
+                }).AddScheme<AuthenticationSchemeOptions, TestAuthHandler>(
+                    TestAuthHandler.SchemeName, _ => { });
+            });
+        });
+
+        _client = testFactory.CreateClient();
     }
 
     [Fact]
@@ -62,5 +74,32 @@ public class PaymentsControllerIntegrationTests : IClassFixture<WebApplicationFa
         response.EnsureSuccessStatusCode();
         var body = await response.Content.ReadAsStringAsync();
         Assert.Contains("healthy", body);
+    }
+}
+
+internal sealed class TestAuthHandler(
+    IOptionsMonitor<AuthenticationSchemeOptions> options,
+    ILoggerFactory logger,
+    UrlEncoder encoder)
+    : AuthenticationHandler<AuthenticationSchemeOptions>(options, logger, encoder)
+{
+    public const string SchemeName = "TestAuth";
+
+    protected override Task<AuthenticateResult> HandleAuthenticateAsync()
+    {
+        var claims = new[]
+        {
+            new Claim(ClaimTypes.NameIdentifier, "999"),
+            new Claim(ClaimTypes.Name, "Integration Test User"),
+            new Claim(ClaimTypes.Email, "integration-test@nwsdb.local"),
+            new Claim(ClaimTypes.Role, "Admin"),
+            new Claim("accountNumber", "NWSDB-0099")
+        };
+
+        var identity = new ClaimsIdentity(claims, SchemeName);
+        var principal = new ClaimsPrincipal(identity);
+        var ticket = new AuthenticationTicket(principal, SchemeName);
+
+        return Task.FromResult(AuthenticateResult.Success(ticket));
     }
 }
