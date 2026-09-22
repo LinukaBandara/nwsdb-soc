@@ -56,6 +56,8 @@ export default function OperationsDashboard({ user, onLogout }) {
   const [healthLoading, setHealthLoading] = useState(false);
 
   const isAdmin = user.role === 'Admin';
+  const onlineServices = healthStatus.filter((service) => service.ok).length;
+  const healthLabel = healthStatus.length ? `${onlineServices}/${healthStatus.length} Services Online` : 'Checking Services';
 
   const runHealthCheck = async () => {
     setHealthLoading(true);
@@ -188,8 +190,8 @@ export default function OperationsDashboard({ user, onLogout }) {
   const nav = [
     ['dashboard', 'Overview', 'grid'],
     ['customers', 'Customer Workspace', 'users'],
-    ['usage', 'Usage & Telemetry', 'water'],
-    ['payments', 'Payment Processing', 'card'],
+    ['usage', 'Usage & Metering', 'water'],
+    ['payments', 'Payments', 'card'],
     ['readings', 'Record Readings', 'meter'],
     ...(isAdmin ? [['users', 'User Directory', 'shield']] : []),
     ['settings', 'Microservices & Health', 'settings']
@@ -197,21 +199,21 @@ export default function OperationsDashboard({ user, onLogout }) {
 
   const title = {
     dashboard: 'Operations & Service Overview',
-    customers: 'Customer Account Intelligence',
-    usage: 'Meter Usage & Tariff Analytics',
-    payments: 'Payment Processing & Approvals',
+    customers: 'Customer Account Overview',
+    usage: 'Meter Usage & Billing',
+    payments: 'Payments & Approvals',
     readings: 'Meter Reading Field Entry',
-    users: 'Enterprise User Management',
+    users: 'User Management',
     settings: 'Microservice Health & Gateway Architecture'
   }[active];
 
   const subtitle = {
-    dashboard: 'Real-time telemetry and transaction clearance across NWSDB microservices.',
-    customers: 'Detailed consumer lookup, billing history, and connection diagnostics.',
-    usage: 'Historical volumetric consumption patterns and block-rate tariff evaluation.',
-    payments: 'Clear pending transactions, inspect receipts, and reconcile payment channels.',
-    readings: 'Submit certified physical meter readings with automated delta checks.',
-    users: 'Provision administrative, staff, and consumer security accounts.',
+    dashboard: 'Monitor customer accounts, usage, payments, and service health from one operations console.',
+    customers: 'Search customer accounts, review usage history, and inspect account activity.',
+    usage: 'Review meter readings, consumption history, and calculated billing information.',
+    payments: 'Review payment records, clear pending transactions, and inspect payment channels.',
+    readings: 'Record meter readings with clear previous-value and consumption checks.',
+    users: 'Create and review system accounts with role-based access.',
     settings: 'Live connectivity status and health probes for Payment, Usage, and Identity APIs.'
   }[active];
 
@@ -282,7 +284,7 @@ export default function OperationsDashboard({ user, onLogout }) {
             <div className="ops-page-actions">
               <div className="ops-live-status">
                 <span className="live-dot" />
-                Microservices Online
+                ${healthLabel}
               </div>
               {lastUpdated && (
                 <span className="ops-updated">
@@ -438,7 +440,7 @@ export default function OperationsDashboard({ user, onLogout }) {
                   {usage && (
                     <div className="ops-mini-grid">
                       <div>
-                        <span>Average Telemetry</span>
+                        <span>Average Reading</span>
                         <strong>{avgUsage} m³</strong>
                       </div>
                       <div>
@@ -614,7 +616,7 @@ function AccountWorkspace({
             <div className="ops-kpi">
               <div className="ops-kpi-top"><span>Reading Count</span></div>
               <strong>{usageHistory.length}</strong>
-              <small>Historical meter audits</small>
+              <small>Recorded readings</small>
             </div>
           </div>
 
@@ -628,7 +630,7 @@ function AccountWorkspace({
                 <div><span>Current Meter Reading</span><strong>{usage.currentCubicMetres} m³</strong></div>
                 <div><span>Previous Meter Reading</span><strong>{usage.previousCubicMetres} m³</strong></div>
                 <div><span>Net Volumetric Consumption</span><strong>{usage.unitsConsumed} m³</strong></div>
-                <div><span>Last Verified Telemetry Date</span><strong>{new Date(usage.readingDateUtc).toLocaleString()}</strong></div>
+                <div><span>Last Recorded Date</span><strong>{new Date(usage.readingDateUtc).toLocaleString()}</strong></div>
                 <div><span>Calculated Outstanding Bill</span><strong>Rs. {Number(usage.estimatedBill).toFixed(2)}</strong></div>
                 <div><span>Account Supply Status</span><strong>Active Standard Connection</strong></div>
               </div>
@@ -666,7 +668,7 @@ function UsageWorkspace({ usage, usageHistory, selectedAccount, accountNumber, s
       {usage && (
         <section className="ops-panel">
           <div className="ops-panel-title">
-            <h2>Current Tariff & Volume Breakdown</h2>
+            <h2>Usage & Billing Analysis</h2>
             <StatusPill status="Verified" />
           </div>
           <div className="ops-detail-list">
@@ -801,7 +803,7 @@ function ReadingWorkspace({ usageHistory, selectedAccount, reading, setReading, 
             )}
 
             <button type="submit" className="btn-blue" disabled={!reading}>
-              Save & Certify Meter Reading
+              Save Meter Reading
             </button>
           </form>
         ) : (
@@ -814,7 +816,7 @@ function ReadingWorkspace({ usageHistory, selectedAccount, reading, setReading, 
       <section className="ops-panel">
         <div className="ops-panel-title">
           <h2>Reading History for {selectedAccount}</h2>
-          <span className="muted">{usageHistory.length} verified records</span>
+          <span className="muted">{usageHistory.length} recorded readings</span>
         </div>
         <MeterTable rows={usageHistory} />
       </section>
@@ -1077,7 +1079,7 @@ function MeterTable({ rows }) {
           <tr>
             <th>Telemetry Reading</th>
             <th>Timestamp (UTC)</th>
-            <th>Verification Status</th>
+            <th>Status</th>
           </tr>
         </thead>
         <tbody>
