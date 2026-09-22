@@ -9,6 +9,8 @@ public interface IUserAccountService
     UserAccount? FindByEmail(string email);
     UserAccount CreateCustomer(RegisterRequest request);
     bool VerifyPassword(UserAccount user, string password);
+    IReadOnlyCollection<UserAccount> GetAll();
+    UserAccount CreateManagedUser(CreateManagedUserRequest request);
 }
 
 public class UserAccountService : IUserAccountService
@@ -41,6 +43,35 @@ public class UserAccountService : IUserAccountService
             Email = email,
             Role = "Customer",
             AccountNumber = request.AccountNumber.Trim()
+        };
+
+        user.PasswordHash = _passwordHasher.HashPassword(user, request.Password);
+        _users[email] = user;
+        return user;
+    }
+
+    public IReadOnlyCollection<UserAccount> GetAll() => _users.Values.OrderBy(u => u.Id).ToArray();
+
+    public UserAccount CreateManagedUser(CreateManagedUserRequest request)
+    {
+        var email = request.Email.Trim();
+
+        if (_users.ContainsKey(email))
+            throw new InvalidOperationException("An account with this email already exists.");
+
+        var role = request.Role.Trim();
+        if (role is not ("Customer" or "Staff" or "Admin" or "Partner"))
+            throw new InvalidOperationException("Role must be Customer, Staff, Admin or Partner.");
+
+        var user = new UserAccount
+        {
+            Id = Interlocked.Increment(ref _nextId),
+            FullName = request.FullName.Trim(),
+            Email = email,
+            Role = role,
+            AccountNumber = string.IsNullOrWhiteSpace(request.AccountNumber)
+                ? null
+                : request.AccountNumber.Trim()
         };
 
         user.PasswordHash = _passwordHasher.HashPassword(user, request.Password);
