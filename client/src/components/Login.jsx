@@ -41,7 +41,6 @@ export default function Login({ onAuthenticated }) {
     <main className="auth-page">
       <section className="auth-card" aria-labelledby="auth-title">
         <div className="auth-national-crest">
-          <span className="flag-bar" aria-hidden="true" />
 </div>
 
         <div className="auth-brand">
