@@ -268,6 +268,10 @@ export default function OperationsDashboard({ user, onLogout }) {
             <div className="ops-avatar">
               {user.fullName?.charAt(0)?.toUpperCase() || 'U'}
             </div>
+            <button type="button" className="ops-header-signout" onClick={onLogout} aria-label="Sign out">
+              <Icon name="logout" />
+              <span>Sign out</span>
+            </button>
           </div>
         </header>
 
