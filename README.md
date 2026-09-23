@@ -71,6 +71,11 @@ status callbacks. On a local-only demo, the checkout can be opened through the
 Sandbox gateway, but the payment status callback cannot reach `localhost`.
 PayHere Sandbox payments are simulated and do not charge real money.
 
+Use the merchant secret exactly as displayed in PayHere's Integration settings,
+including any Base64-looking characters and trailing `=` padding. The secret
+must belong to the same sandbox Integration domain from which the React client
+opens checkout (for example, `localhost` during local development).
+
 ## Running with Docker Compose
 
 ```bash
