@@ -100,6 +100,24 @@ export default function PaymentPanel({ accountNumber, onPaymentSuccess }) {
   }, [accountNumber, loadHistory, onPaymentSuccess, stopPayHerePolling]);
 
   useEffect(() => {
+    const handlePayHereMessage = (event) => {
+      if (event.origin !== window.location.origin) return;
+      if (event.data?.type !== 'NWSDB_PAYHERE_RETURN') return;
+      if (!event.data.orderId) return;
+
+      setStatus({
+        ok: true,
+        message: 'PayHere returned. Confirming payment status...'
+      });
+      stopPayHerePolling();
+      pollPayHereStatus(event.data.orderId, 0);
+    };
+
+    window.addEventListener('message', handlePayHereMessage);
+    return () => window.removeEventListener('message', handlePayHereMessage);
+  }, [pollPayHereStatus, stopPayHerePolling]);
+
+  useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const payhere = params.get('payhere');
     const orderId =
@@ -107,6 +125,25 @@ export default function PaymentPanel({ accountNumber, onPaymentSuccess }) {
       sessionStorage.getItem('nwsdb_payhere_order');
 
     if ((payhere === 'return' || payhere === 'cancel') && orderId) {
+      const isPopup = Boolean(window.opener && !window.opener.closed);
+
+      if (isPopup) {
+        window.opener.postMessage(
+          { type: 'NWSDB_PAYHERE_RETURN', orderId, result: payhere },
+          window.location.origin
+        );
+
+        window.setTimeout(() => {
+          try {
+            window.close();
+          } catch {
+            // Browser may refuse to close a non-script-opened window.
+          }
+        }, 500);
+
+        return;
+      }
+
       setStatus({
         ok: true,
         message: 'Returned from PayHere. Confirming payment status...'
@@ -161,12 +198,35 @@ export default function PaymentPanel({ accountNumber, onPaymentSuccess }) {
 
         document.body.appendChild(form);
 
-        sessionStorage.setItem(
-          'nwsdb_payhere_order',
-          checkout.fields.order_id
+        const orderId = checkout.fields.order_id;
+        sessionStorage.setItem('nwsdb_payhere_order', orderId);
+
+        // Keep the NWSDB portal open. PayHere runs in a separate window,
+        // then returns a small message to this original portal window.
+        const popup = window.open(
+          '',
+          'nwsdb_payhere_checkout',
+          'popup=yes,width=520,height=760,resizable=yes,scrollbars=yes'
         );
 
+        if (!popup) {
+          form.remove();
+          sessionStorage.removeItem('nwsdb_payhere_order');
+          setStatus({
+            ok: false,
+            message: 'PayHere checkout was blocked by the browser. Please allow pop-ups for the NWSDB portal and try again.'
+          });
+          return;
+        }
+
+        form.target = 'nwsdb_payhere_checkout';
+        popup.focus();
         form.submit();
+        setStatus({
+          ok: true,
+          message: 'PayHere checkout opened in a separate window. Keep this NWSDB window open while completing payment.'
+        });
+        setLoading(false);
         return;
       }
 
