@@ -36,9 +36,12 @@ public class PaymentService : IPaymentService
         _db.Payments.Add(payment);
         await _db.SaveChangesAsync();
 
-        // The gateway step is simulated for this assignment.
-        payment.Status = PaymentStatus.Completed;
-        await _db.SaveChangesAsync();
+        // PayHere payments remain Pending until PayHere confirms them via notify_url.
+        if (!request.Channel.Equals("PayHere-Sandbox", StringComparison.OrdinalIgnoreCase))
+        {
+            payment.Status = PaymentStatus.Completed;
+            await _db.SaveChangesAsync();
+        }
 
         _logger.LogInformation(
             "Payment {Reference} for account {Account} processed via {Channel}",
