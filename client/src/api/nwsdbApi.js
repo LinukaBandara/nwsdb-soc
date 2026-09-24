@@ -45,12 +45,19 @@ export const AuthApi = {
       body: JSON.stringify({ email, password })
     }).then(handle),
 
-  register: (fullName, email, password, accountNumber) =>
+  register: (fullName, email, password) =>
     fetch(`${IDENTITY_API}/auth/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ fullName, email, password, accountNumber })
+      body: JSON.stringify({ fullName, email, password })
     }).then(handle),
+
+  linkAccount: (accountNumber) =>
+    fetch(`${IDENTITY_API}/auth/me/account`, authorizedOptions({
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ accountNumber })
+    })).then(handle),
 
   me: () => fetch(`${IDENTITY_API}/auth/me`, authorizedOptions()).then(handle),
   users: () => fetch(`${IDENTITY_API}/auth/users`, authorizedOptions()).then(handle),
