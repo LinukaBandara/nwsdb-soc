@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using NWSDB.IdentityService.Models;
@@ -19,9 +20,8 @@ public class AuthController(
     {
         if (string.IsNullOrWhiteSpace(request.FullName) ||
             string.IsNullOrWhiteSpace(request.Email) ||
-            string.IsNullOrWhiteSpace(request.Password) ||
-            string.IsNullOrWhiteSpace(request.AccountNumber))
-            return BadRequest("Full name, email, password and account number are required.");
+            string.IsNullOrWhiteSpace(request.Password))
+            return BadRequest("Full name, email and password are required.");
 
         if (request.Password.Length < 6)
             return BadRequest("Password must contain at least 6 characters.");
@@ -53,6 +53,30 @@ public class AuthController(
         if (user is null || !users.VerifyPassword(user, password))
             return Unauthorized("Invalid email or password.");
 
+        return Ok(CreateResponse(user));
+    }
+
+    [Authorize]
+    [HttpPut("me/account")]
+    [ProducesResponseType(typeof(AuthResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public ActionResult<AuthResponse> LinkAccount(LinkAccountRequest request)
+    {
+        if (string.IsNullOrWhiteSpace(request.AccountNumber))
+            return BadRequest("NWSDB account number is required.");
+
+        var idValue = User.FindFirstValue(ClaimTypes.NameIdentifier)
+            ?? User.FindFirstValue("sub");
+
+        if (!int.TryParse(idValue, out var userId))
+            return Unauthorized();
+
+        var user = users.FindById(userId);
+        if (user is null)
+            return NotFound("User account was not found.");
+
+        users.LinkAccount(user, request.AccountNumber);
         return Ok(CreateResponse(user));
     }
 
