@@ -7,6 +7,7 @@ namespace NWSDB.IdentityService.Services;
 public interface IUserAccountService
 {
     UserAccount? FindByEmail(string email);
+    UserAccount? FindById(int id);
     UserAccount CreateCustomer(RegisterRequest request);
     bool VerifyPassword(UserAccount user, string password);
     IReadOnlyCollection<UserAccount> GetAll();
@@ -42,12 +43,25 @@ public class UserAccountService : IUserAccountService
             FullName = request.FullName.Trim(),
             Email = email,
             Role = "Customer",
-            AccountNumber = request.AccountNumber.Trim()
+            AccountNumber = null
         };
 
         user.PasswordHash = _passwordHasher.HashPassword(user, request.Password);
         _users[email] = user;
         return user;
+    }
+
+    public UserAccount? FindById(int id) =>
+        _users.Values.FirstOrDefault(user => user.Id == id);
+
+    public bool LinkAccount(UserAccount user, string accountNumber)
+    {
+        var normalized = accountNumber.Trim();
+        if (string.IsNullOrWhiteSpace(normalized))
+            return false;
+
+        user.AccountNumber = normalized;
+        return true;
     }
 
     public IReadOnlyCollection<UserAccount> GetAll() => _users.Values.OrderBy(u => u.Id).ToArray();
