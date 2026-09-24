@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
@@ -16,11 +17,13 @@ public class PaymentsController : ControllerBase
 {
     private readonly IPaymentService _paymentService;
     private readonly IConfiguration _configuration;
+    private readonly ILogger<PaymentsController> _logger;
 
-    public PaymentsController(IPaymentService paymentService, IConfiguration configuration)
+    public PaymentsController(IPaymentService paymentService, IConfiguration configuration, ILogger<PaymentsController> logger)
     {
         _paymentService = paymentService;
         _configuration = configuration;
+        _logger = logger;
     }
 
     [HttpPost]
@@ -76,7 +79,7 @@ public class PaymentsController : ControllerBase
 
         var orderId = payment.ReferenceNumber;
         var amount = request.Amount.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture);
-        var hash = CreatePayHereHash(merchantId, orderId, amount, "LKR", merchantSecret);
+        var hash = CreatePayHereCheckoutHash(merchantId, orderId, amount, "LKR", merchantSecret);
 
         var customerName = User.FindFirstValue(ClaimTypes.Name) ?? "NWSDB Customer";
         var parts = customerName.Split(' ', 2, StringSplitOptions.RemoveEmptyEntries);
@@ -132,27 +135,78 @@ public class PaymentsController : ControllerBase
             !string.Equals(merchantId, _configuration["PayHere:MerchantId"], StringComparison.Ordinal))
             return BadRequest();
 
-        var expectedSignature = CreatePayHereHash(merchantId, orderId, amount, currency, merchantSecret, statusCode);
-        if (!CryptographicOperations.FixedTimeEquals(Encoding.UTF8.GetBytes(expectedSignature), Encoding.UTF8.GetBytes(receivedSignature)))
+        var expectedSignature = CreatePayHereNotificationHash(merchantId, orderId, amount, currency, statusCode, merchantSecret);
+
+        _logger.LogInformation(
+            "PayHere notification received. OrderId={OrderId}, StatusCode={StatusCode}, Amount={Amount}, Currency={Currency}",
+            orderId, statusCode, amount, currency);
+
+        var receivedBytes = Encoding.UTF8.GetBytes(receivedSignature.Trim().ToUpperInvariant());
+        var expectedBytes = Encoding.UTF8.GetBytes(expectedSignature);
+
+        if (receivedBytes.Length != expectedBytes.Length ||
+            !CryptographicOperations.FixedTimeEquals(expectedBytes, receivedBytes))
+        {
+            _logger.LogWarning("PayHere signature mismatch for order {OrderId}.", orderId);
             return BadRequest();
+        }
+
+        if (!string.Equals(currency, "LKR", StringComparison.OrdinalIgnoreCase) ||
+            !decimal.TryParse(amount, NumberStyles.Number, CultureInfo.InvariantCulture, out var gatewayAmount))
+            return BadRequest();
+
+        var accountNumber = form["custom_1"].ToString();
+        if (string.IsNullOrWhiteSpace(accountNumber))
+            return BadRequest();
+
+        var payments = await _paymentService.GetPaymentsForAccountAsync(accountNumber);
+        var existingPayment = payments.FirstOrDefault(p => p.ReferenceNumber == orderId);
+
+        if (existingPayment is null)
+        {
+            _logger.LogWarning("PayHere notification received for unknown order {OrderId}", orderId);
+            return NotFound();
+        }
+
+        if (existingPayment.Amount != gatewayAmount)
+        {
+            _logger.LogWarning(
+                "PayHere amount mismatch. OrderId={OrderId}, StoredAmount={StoredAmount}, GatewayAmount={GatewayAmount}",
+                orderId, existingPayment.Amount, gatewayAmount);
+            return BadRequest();
+        }
 
         var status = statusCode switch
         {
             "2" => PaymentStatus.Completed,
             "-1" or "-2" or "-3" => PaymentStatus.Failed,
+            "0" => PaymentStatus.Pending,
             _ => PaymentStatus.Pending
         };
 
         var payment = await _paymentService.UpdateStatusByReferenceAsync(orderId, status);
-        return payment is null ? NotFound() : Ok();
+
+        if (payment is null)
+            return NotFound();
+
+        _logger.LogInformation(
+            "PayHere payment {OrderId} successfully updated to {Status}",
+            orderId, status);
+
+        return Ok();
     }
 
-    private static string CreatePayHereHash(string merchantId, string orderId, string amount, string currency, string merchantSecret, string? statusCode = null)
+    private static string CreatePayHereCheckoutHash(string merchantId, string orderId, string amount, string currency, string merchantSecret)
     {
         var secretHash = Convert.ToHexString(MD5.HashData(Encoding.UTF8.GetBytes(merchantSecret))).ToUpperInvariant();
-        var source = statusCode is null
-            ? merchantId + orderId + amount + currency + secretHash
-            : merchantId + orderId + amount + currency + statusCode + secretHash;
+        var source = merchantId + orderId + amount + currency + secretHash;
+        return Convert.ToHexString(MD5.HashData(Encoding.UTF8.GetBytes(source))).ToUpperInvariant();
+    }
+
+    private static string CreatePayHereNotificationHash(string merchantId, string orderId, string amount, string currency, string statusCode, string merchantSecret)
+    {
+        var secretHash = Convert.ToHexString(MD5.HashData(Encoding.UTF8.GetBytes(merchantSecret))).ToUpperInvariant();
+        var source = merchantId + orderId + amount + currency + statusCode + secretHash;
         return Convert.ToHexString(MD5.HashData(Encoding.UTF8.GetBytes(source))).ToUpperInvariant();
     }
 
