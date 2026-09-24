@@ -17,10 +17,16 @@ export default function PaymentPanel({ accountNumber, onPaymentSuccess }) {
   const [statusFilter, setStatusFilter] = useState('ALL');
   const payHereTimerRef = useRef(null);
 
-  const loadHistory = useCallback(() => {
-    PaymentApi.historyForAccount(accountNumber)
-      .then((data) => setHistory(data || []))
-      .catch((err) => setStatus({ ok: false, message: err.message || 'Unable to load payment history.' }));
+  const loadHistory = useCallback(async () => {
+    try {
+      const data = await PaymentApi.historyForAccount(accountNumber);
+      const records = data || [];
+      setHistory(records);
+      return records;
+    } catch (err) {
+      setStatus({ ok: false, message: err.message || 'Unable to load payment history.' });
+      throw err;
+    }
   }, [accountNumber]);
 
   useEffect(() => {
