@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { PaymentApi } from '../api/nwsdbApi';
 
 const CHANNELS = [
@@ -15,16 +15,111 @@ export default function PaymentPanel({ accountNumber, onPaymentSuccess }) {
   const [activeReceipt, setActiveReceipt] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
+  const payHereTimerRef = useRef(null);
 
-  const loadHistory = () => {
+  const loadHistory = useCallback(() => {
     PaymentApi.historyForAccount(accountNumber)
       .then((data) => setHistory(data || []))
       .catch((err) => setStatus({ ok: false, message: err.message || 'Unable to load payment history.' }));
-  };
+  }, [accountNumber]);
 
   useEffect(() => {
     loadHistory();
-  }, [accountNumber]);
+  }, [loadHistory]);
+
+  const stopPayHerePolling = useCallback(() => {
+    if (payHereTimerRef.current) {
+      window.clearTimeout(payHereTimerRef.current);
+      payHereTimerRef.current = null;
+    }
+  }, []);
+
+  const pollPayHereStatus = useCallback(async (orderId, attempt = 0) => {
+    if (!orderId || !accountNumber) return;
+
+    try {
+      const payments = await loadHistory();
+      const payment = payments.find((p) => p.referenceNumber === orderId);
+
+      if (payment?.status === 'Completed') {
+        stopPayHerePolling();
+        setStatus({
+          ok: true,
+          message: `Payment ${orderId} completed successfully.`
+        });
+        setActiveReceipt(payment);
+        sessionStorage.removeItem('nwsdb_payhere_order');
+        if (onPaymentSuccess) onPaymentSuccess(payment);
+        return;
+      }
+
+      if (payment?.status === 'Failed') {
+        stopPayHerePolling();
+        setStatus({
+          ok: false,
+          message: `Payment ${orderId} failed or was cancelled.`
+        });
+        sessionStorage.removeItem('nwsdb_payhere_order');
+        return;
+      }
+
+      if (attempt >= 11) {
+        stopPayHerePolling();
+        setStatus({
+          ok: true,
+          message: 'Payment is still pending. PayHere has not sent final confirmation yet.'
+        });
+        return;
+      }
+
+      payHereTimerRef.current = window.setTimeout(
+        () => pollPayHereStatus(orderId, attempt + 1),
+        1500
+      );
+    } catch {
+      if (attempt >= 11) {
+        stopPayHerePolling();
+        setStatus({
+          ok: false,
+          message: 'Unable to confirm PayHere payment status.'
+        });
+        return;
+      }
+
+      payHereTimerRef.current = window.setTimeout(
+        () => pollPayHereStatus(orderId, attempt + 1),
+        1500
+      );
+    }
+  }, [accountNumber, loadHistory, onPaymentSuccess, stopPayHerePolling]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const payhere = params.get('payhere');
+    const orderId =
+      params.get('orderId') ||
+      sessionStorage.getItem('nwsdb_payhere_order');
+
+    if ((payhere === 'return' || payhere === 'cancel') && orderId) {
+      setStatus({
+        ok: true,
+        message: 'Returned from PayHere. Confirming payment status...'
+      });
+
+      stopPayHerePolling();
+      pollPayHereStatus(orderId, 0);
+
+      window.history.replaceState(
+        {},
+        document.title,
+        window.location.pathname
+      );
+    }
+  }, [pollPayHereStatus, stopPayHerePolling]);
+
+  useEffect(() => {
+    return () => stopPayHerePolling();
+  }, [stopPayHerePolling]);
 
   const handlePreset = (val) => {
     setAmount(String(val));
@@ -59,6 +154,12 @@ export default function PaymentPanel({ accountNumber, onPaymentSuccess }) {
         });
 
         document.body.appendChild(form);
+
+        sessionStorage.setItem(
+          'nwsdb_payhere_order',
+          checkout.fields.order_id
+        );
+
         form.submit();
         return;
       }
