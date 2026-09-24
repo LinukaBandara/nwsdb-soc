@@ -116,6 +116,9 @@ public class PaymentsController : ControllerBase
     [HttpPost("payhere/notify")]
     public async Task<IActionResult> PayHereNotify()
     {
+        if (!Request.HasFormContentType)
+            return BadRequest("PayHere notification must use form data.");
+
         var form = await Request.ReadFormAsync();
         var merchantId = form["merchant_id"].ToString();
         var orderId = form["order_id"].ToString();
