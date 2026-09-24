@@ -5,6 +5,7 @@ import PaymentPanel from './components/PaymentPanel';
 import UsagePanel from './components/UsagePanel';
 import { AuthApi } from './api/nwsdbApi';
 import OperationsDashboard from './components/OperationsDashboard';
+import './final-alignment.css';
 
 export default function App() {
   const [user, setUser] = useState(() => {
