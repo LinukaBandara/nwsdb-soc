@@ -180,12 +180,33 @@ export default function PaymentPanel({ accountNumber, onPaymentSuccess }) {
     }
 
     setLoading(true);
+    let payHerePopup = null;
+
     try {
       if (channel === 'PayHere') {
+        // Open the popup immediately from the button click so Edge does not
+        // treat it as a blocked popup after the async API request.
+        payHerePopup = window.open(
+          '',
+          'nwsdb_payhere_checkout',
+          'popup=yes,width=520,height=760,resizable=yes,scrollbars=yes'
+        );
+
+        if (!payHerePopup) {
+          setStatus({
+            ok: false,
+            message: 'PayHere checkout was blocked by the browser. Please allow pop-ups for the NWSDB portal and try again.'
+          });
+          return;
+        }
+
+        payHerePopup.document.title = 'Opening PayHere…';
+
         const checkout = await PaymentApi.createPayHereCheckout(accountNumber, numericAmount);
         const form = document.createElement('form');
         form.method = 'POST';
         form.action = checkout.actionUrl;
+        form.target = 'nwsdb_payhere_checkout';
         form.style.display = 'none';
 
         Object.entries(checkout.fields).forEach(([name, value]) => {
@@ -201,26 +222,7 @@ export default function PaymentPanel({ accountNumber, onPaymentSuccess }) {
         const orderId = checkout.fields.order_id;
         sessionStorage.setItem('nwsdb_payhere_order', orderId);
 
-        // Keep the NWSDB portal open. PayHere runs in a separate window,
-        // then returns a small message to this original portal window.
-        const popup = window.open(
-          '',
-          'nwsdb_payhere_checkout',
-          'popup=yes,width=520,height=760,resizable=yes,scrollbars=yes'
-        );
-
-        if (!popup) {
-          form.remove();
-          sessionStorage.removeItem('nwsdb_payhere_order');
-          setStatus({
-            ok: false,
-            message: 'PayHere checkout was blocked by the browser. Please allow pop-ups for the NWSDB portal and try again.'
-          });
-          return;
-        }
-
-        form.target = 'nwsdb_payhere_checkout';
-        popup.focus();
+        payHerePopup.focus();
         form.submit();
         setStatus({
           ok: true,
