@@ -1,6 +1,8 @@
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using NWSDB.IdentityService.Data;
 using NWSDB.IdentityService.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -12,7 +14,12 @@ var audience = builder.Configuration["Jwt:Audience"] ?? "NWSDB.SOC";
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-builder.Services.AddSingleton<IUserAccountService, UserAccountService>();
+
+builder.Services.AddDbContext<IdentityDbContext>(options =>
+    options.UseSqlServer(
+        builder.Configuration.GetConnectionString("IdentityDatabase")));
+
+builder.Services.AddScoped<IUserAccountService, UserAccountService>();
 builder.Services.AddSingleton<IJwtTokenService, JwtTokenService>();
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -36,6 +43,13 @@ builder.Services.AddCors(o => o.AddPolicy("AllowClient", p =>
     p.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod()));
 
 var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<IdentityDbContext>();
+    db.Database.EnsureCreated();
+    IdentityDbInitializer.Seed(db);
+}
 
 if (app.Environment.IsDevelopment())
 {

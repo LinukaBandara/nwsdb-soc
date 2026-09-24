@@ -1,5 +1,6 @@
-using System.Collections.Concurrent;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using NWSDB.IdentityService.Data;
 using NWSDB.IdentityService.Models;
 
 namespace NWSDB.IdentityService.Services;
@@ -12,34 +13,27 @@ public interface IUserAccountService
     bool VerifyPassword(UserAccount user, string password);
     IReadOnlyCollection<UserAccount> GetAll();
     UserAccount CreateManagedUser(CreateManagedUserRequest request);
+    bool LinkAccount(UserAccount user, string accountNumber);
 }
 
-public class UserAccountService : IUserAccountService
+public class UserAccountService(IdentityDbContext db) : IUserAccountService
 {
-    private readonly ConcurrentDictionary<string, UserAccount> _users = new(StringComparer.OrdinalIgnoreCase);
     private readonly PasswordHasher<UserAccount> _passwordHasher = new();
-    private int _nextId = 3;
-
-    public UserAccountService()
-    {
-        AddSeedUser(1, "NWSDB Administrator", "admin@nwsdb.local", "Admin", null, "Admin@123");
-        AddSeedUser(2, "NWSDB Staff", "staff@nwsdb.local", "Staff", null, "Staff@123");
-        AddSeedUser(3, "NWSDB Partner", "partner@nwsdb.local", "Partner", null, "Partner@123");
-    }
 
     public UserAccount? FindByEmail(string? email) =>
-        !string.IsNullOrWhiteSpace(email) && _users.TryGetValue(email.Trim(), out var user) ? user : null;
+        !string.IsNullOrWhiteSpace(email)
+            ? db.UserAccounts.FirstOrDefault(u => u.Email == email.Trim())
+            : null;
 
     public UserAccount CreateCustomer(RegisterRequest request)
     {
         var email = request.Email.Trim();
 
-        if (_users.ContainsKey(email))
+        if (db.UserAccounts.Any(u => u.Email == email))
             throw new InvalidOperationException("An account with this email already exists.");
 
         var user = new UserAccount
         {
-            Id = Interlocked.Increment(ref _nextId),
             FullName = request.FullName.Trim(),
             Email = email,
             Role = "Customer",
@@ -47,39 +41,48 @@ public class UserAccountService : IUserAccountService
         };
 
         user.PasswordHash = _passwordHasher.HashPassword(user, request.Password);
-        _users[email] = user;
+        db.UserAccounts.Add(user);
+        db.SaveChanges();
+
         return user;
     }
 
     public UserAccount? FindById(int id) =>
-        _users.Values.FirstOrDefault(user => user.Id == id);
+        db.UserAccounts.FirstOrDefault(user => user.Id == id);
 
     public bool LinkAccount(UserAccount user, string accountNumber)
     {
         var normalized = accountNumber.Trim();
+
         if (string.IsNullOrWhiteSpace(normalized))
             return false;
 
         user.AccountNumber = normalized;
+        db.SaveChanges();
+
         return true;
     }
 
-    public IReadOnlyCollection<UserAccount> GetAll() => _users.Values.OrderBy(u => u.Id).ToArray();
+    public IReadOnlyCollection<UserAccount> GetAll() =>
+        db.UserAccounts
+            .AsNoTracking()
+            .OrderBy(u => u.Id)
+            .ToArray();
 
     public UserAccount CreateManagedUser(CreateManagedUserRequest request)
     {
         var email = request.Email.Trim();
 
-        if (_users.ContainsKey(email))
+        if (db.UserAccounts.Any(u => u.Email == email))
             throw new InvalidOperationException("An account with this email already exists.");
 
         var role = request.Role.Trim();
+
         if (role is not ("Customer" or "Staff" or "Admin" or "Partner"))
             throw new InvalidOperationException("Role must be Customer, Staff, Admin or Partner.");
 
         var user = new UserAccount
         {
-            Id = Interlocked.Increment(ref _nextId),
             FullName = request.FullName.Trim(),
             Email = email,
             Role = role,
@@ -89,32 +92,13 @@ public class UserAccountService : IUserAccountService
         };
 
         user.PasswordHash = _passwordHasher.HashPassword(user, request.Password);
-        _users[email] = user;
+        db.UserAccounts.Add(user);
+        db.SaveChanges();
+
         return user;
     }
 
     public bool VerifyPassword(UserAccount user, string password) =>
         _passwordHasher.VerifyHashedPassword(user, user.PasswordHash, password)
         == PasswordVerificationResult.Success;
-
-    private void AddSeedUser(
-        int id,
-        string fullName,
-        string email,
-        string role,
-        string? accountNumber,
-        string password)
-    {
-        var user = new UserAccount
-        {
-            Id = id,
-            FullName = fullName,
-            Email = email,
-            Role = role,
-            AccountNumber = accountNumber
-        };
-
-        user.PasswordHash = _passwordHasher.HashPassword(user, password);
-        _users[email] = user;
-    }
 }
