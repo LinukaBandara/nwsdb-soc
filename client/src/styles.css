@@ -3485,3 +3485,32 @@ select:focus-visible{
   .receipt-actions{display:none!important}
   @page{size:A4;margin:16mm}
 }
+
+
+/* Final footer link alignment fix */
+.public-footer-links{
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:20px;
+  margin-top:0;
+}
+
+.public-footer-links a,
+.public-footer-links button{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  margin:0;
+  padding:0;
+  min-height:0;
+  line-height:1.2;
+  vertical-align:middle;
+}
+
+@media (max-width:760px){
+  .public-footer-links{
+    justify-content:flex-start;
+    margin-top:25px;
+  }
+}
