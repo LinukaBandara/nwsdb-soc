@@ -14,9 +14,9 @@ public static class IdentityDbInitializer
 
         var users = new[]
         {
-            CreateUser(passwordHasher, 1, "NWSDB Administrator", "admin@nwsdb.local", "Admin", null, "Admin@123"),
-            CreateUser(passwordHasher, 2, "NWSDB Staff", "staff@nwsdb.local", "Staff", null, "Staff@123"),
-            CreateUser(passwordHasher, 3, "NWSDB Partner", "partner@nwsdb.local", "Partner", null, "Partner@123")
+            CreateUser(passwordHasher, "NWSDB Administrator", "admin@nwsdb.local", "Admin", null, "Admin@123"),
+            CreateUser(passwordHasher, "NWSDB Staff", "staff@nwsdb.local", "Staff", null, "Staff@123"),
+            CreateUser(passwordHasher, "NWSDB Partner", "partner@nwsdb.local", "Partner", null, "Partner@123")
         };
 
         db.UserAccounts.AddRange(users);
@@ -25,7 +25,6 @@ public static class IdentityDbInitializer
 
     private static UserAccount CreateUser(
         PasswordHasher<UserAccount> passwordHasher,
-        int id,
         string fullName,
         string email,
         string role,
@@ -34,7 +33,6 @@ public static class IdentityDbInitializer
     {
         var user = new UserAccount
         {
-            Id = id,
             FullName = fullName,
             Email = email,
             Role = role,
