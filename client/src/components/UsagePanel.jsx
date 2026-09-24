@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { UsageApi } from '../api/nwsdbApi';
+import { UsageApi, PaymentApi } from '../api/nwsdbApi';
 
 export default function UsagePanel({ accountNumber, refreshTrigger }) {
   const [usage, setUsage] = useState(null);
   const [history, setHistory] = useState([]);
+  const [payments, setPayments] = useState([]);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -13,9 +14,10 @@ export default function UsagePanel({ accountNumber, refreshTrigger }) {
 
     Promise.allSettled([
       UsageApi.latest(accountNumber),
-      UsageApi.history(accountNumber)
+      UsageApi.history(accountNumber),
+      PaymentApi.historyForAccount(accountNumber)
     ])
-      .then(([latestRes, historyRes]) => {
+      .then(([latestRes, historyRes, paymentsRes]) => {
         if (latestRes.status === 'fulfilled') {
           setUsage(latestRes.value);
         } else {
@@ -38,6 +40,12 @@ export default function UsagePanel({ accountNumber, refreshTrigger }) {
           }
           setHistory([]);
         }
+
+        if (paymentsRes.status === 'fulfilled') {
+          setPayments(paymentsRes.value || []);
+        } else {
+          setPayments([]);
+        }
       })
       .finally(() => setLoading(false));
   };
@@ -47,6 +55,11 @@ export default function UsagePanel({ accountNumber, refreshTrigger }) {
   }, [accountNumber, refreshTrigger]);
 
   const units = Number(usage?.unitsConsumed || 0);
+  const billAmount = Number(usage?.estimatedBill || 0);
+  const completedPaid = payments
+    .filter((p) => p.status === 'Completed')
+    .reduce((sum, p) => sum + Number(p.amount || 0), 0);
+  const outstandingAmount = Math.max(0, billAmount - completedPaid);
 
   // Assignment demonstration tariff blocks — kept consistent with the Usage Service calculation.
   // Block 1: 0 - 10 m³, Block 2: 11 - 20 m³, Block 3: 21 - 30 m³, Block 4: > 30 m³
@@ -126,12 +139,12 @@ export default function UsagePanel({ accountNumber, refreshTrigger }) {
             </div>
 
             <div className="usage-stat-box">
-              <span>Current Bill Estimate</span>
+              <span>Outstanding Bill</span>
               <strong style={{ color: 'var(--blue-600)' }}>
-                Rs. {Number(usage.estimatedBill).toFixed(2)}
+                Rs. {outstandingAmount.toFixed(2)}
               </strong>
               <small>
-                Calculated using the assignment demonstration tariff model
+                Bill Rs. {billAmount.toFixed(2)} · Paid Rs. {Math.min(completedPaid, billAmount).toFixed(2)}
               </small>
             </div>
           </div>
