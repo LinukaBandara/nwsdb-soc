@@ -3514,3 +3514,69 @@ select:focus-visible{
     margin-top:25px;
   }
 }
+
+
+/* Final authentication form alignment */
+.auth-card form {
+  width: 100%;
+}
+
+.auth-card form > label {
+  width: 100%;
+  margin: 0;
+}
+
+.auth-card form > label > input {
+  width: 100%;
+  margin-top: 0;
+}
+
+.auth-card .input-with-action {
+  width: 100%;
+  margin-top: 0;
+}
+
+.auth-card .input-with-action > input {
+  width: 100%;
+  margin-top: 0;
+}
+
+.auth-card .input-action-btn {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  width: 38px;
+  min-width: 38px;
+  height: 38px;
+  min-height: 38px;
+  margin: 0;
+  padding: 0;
+  transform: translateY(-50%);
+}
+
+.auth-card .error-banner {
+  width: 100%;
+  margin: 0;
+}
+
+.auth-card form > button[type="submit"] {
+  width: 100%;
+  margin: 0;
+}
+
+.auth-card .auth-switch {
+  width: 100%;
+  flex-wrap: wrap;
+  text-align: center;
+}
+
+@media (max-width: 480px) {
+  .auth-card {
+    width: 100%;
+    padding: 24px 18px;
+  }
+
+  .auth-heading h1 {
+    font-size: 22px;
+  }
+}
