@@ -1,0 +1,223 @@
+/* Final responsive alignment fixes for the public portal and authentication view. */
+.public-header {
+  width: min(1180px, calc(100% - 40px));
+  min-height: 72px;
+  margin: 0 auto;
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 28px;
+  position: relative;
+  z-index: 20;
+  box-sizing: border-box;
+}
+
+.public-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 11px;
+  flex: 0 0 auto;
+  min-width: 0;
+  text-decoration: none;
+}
+
+.public-brand > span:last-child {
+  display: block;
+  min-width: 0;
+}
+
+.public-brand strong,
+.public-brand small {
+  display: block;
+  white-space: nowrap;
+}
+
+.public-nav {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 22px;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.public-nav a,
+.public-nav button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 42px;
+  margin: 0;
+  padding: 0;
+  line-height: 1;
+  white-space: nowrap;
+  box-sizing: border-box;
+}
+
+.public-nav-login {
+  margin-left: 4px !important;
+  padding: 0 14px !important;
+}
+
+.public-nav-register {
+  padding: 0 16px !important;
+  gap: 7px;
+}
+
+.public-nav-register svg,
+.public-hero-actions svg,
+.public-service-grid a svg,
+.public-process-copy button svg,
+.public-help-actions svg {
+  width: 15px;
+  height: 15px;
+  flex: 0 0 15px;
+}
+
+.public-menu {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  margin: 0;
+  padding: 9px;
+  flex: 0 0 42px;
+}
+
+.public-footer-links {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 24px;
+  margin-top: 0;
+}
+
+.public-footer-links a,
+.public-footer-links button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 30px;
+  margin: 0;
+  padding: 0;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.auth-page {
+  position: relative;
+  min-height: 100vh;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+.auth-card {
+  width: min(100%, 460px);
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+.auth-card form {
+  width: 100%;
+}
+
+.auth-card label {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.auth-card input {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.input-with-action {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.input-with-action input {
+  width: 100%;
+}
+
+.auth-card form > button[type="submit"] {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+@media (max-width: 800px) {
+  .public-header {
+    width: calc(100% - 28px);
+    min-height: 68px;
+    padding: 0 16px;
+    gap: 12px;
+  }
+
+  .public-nav {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    right: 0;
+    display: none;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
+    gap: 4px;
+    padding: 10px;
+    border: 1px solid var(--slate-200);
+    border-radius: 12px;
+    background: #fff;
+    box-shadow: 0 18px 40px rgba(7, 37, 59, .12);
+  }
+
+  .public-nav.is-open {
+    display: flex;
+  }
+
+  .public-nav a,
+  .public-nav button {
+    width: 100%;
+    height: 44px;
+  }
+
+  .public-nav-login {
+    margin-left: 0 !important;
+  }
+
+  .public-menu {
+    display: inline-flex;
+  }
+
+  .auth-page {
+    padding: 76px 16px 28px;
+  }
+}
+
+@media (max-width: 480px) {
+  .public-header {
+    width: calc(100% - 20px);
+    padding: 0 10px;
+  }
+
+  .public-brand strong {
+    font-size: 12px;
+  }
+
+  .public-brand small {
+    font-size: 9px;
+  }
+
+  .auth-card {
+    border-radius: 14px;
+    padding: 22px 18px;
+  }
+
+  .auth-heading h1 {
+    font-size: 22px;
+  }
+}
