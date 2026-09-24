@@ -56,7 +56,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 builder.Services.AddAuthorization();
 
 builder.Services.AddDbContext<UsageDbContext>(options =>
-    options.UseInMemoryDatabase("UsageServiceDb"));
+    options.UseSqlServer(builder.Configuration.GetConnectionString("UsageDatabase")));
 
 builder.Services.AddScoped<IUsageService, NWSDB.UsageService.Services.UsageService>();
 
@@ -67,6 +67,12 @@ builder.Services.AddCors(options =>
 });
 
 var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<UsageDbContext>();
+    db.Database.EnsureCreated();
+}
 
 if (app.Environment.IsDevelopment())
 {
