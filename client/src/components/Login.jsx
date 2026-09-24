@@ -3,7 +3,7 @@ import { AuthApi } from '../api/nwsdbApi';
 
 export default function Login({ onAuthenticated, onBackHome, initialMode = 'login' }) {
   const [mode, setMode] = useState(initialMode);
-  const [form, setForm] = useState({ fullName: '', email: '', password: '', accountNumber: '' });
+  const [form, setForm] = useState({ fullName: '', email: '', password: '' });
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -19,7 +19,7 @@ export default function Login({ onAuthenticated, onBackHome, initialMode = 'logi
       if (mode === 'login') {
         response = await AuthApi.login(form.email.trim(), form.password);
       } else {
-        response = await AuthApi.register(form.fullName.trim(), form.email.trim(), form.password, form.accountNumber.trim());
+        response = await AuthApi.register(form.fullName.trim(), form.email.trim(), form.password);
       }
       localStorage.setItem('nwsdb_token', response.token);
       localStorage.setItem('nwsdb_user', JSON.stringify({
@@ -61,7 +61,7 @@ export default function Login({ onAuthenticated, onBackHome, initialMode = 'logi
           <p>
             {mode === 'login'
               ? 'Access water consumption intelligence, bill settlement, or staff operations.'
-              : 'Register your water supply account to manage bills and track consumption.'}
+              : 'Create your customer login first. You can link your existing NWSDB water account after registration.'}
           </p>
         </div>
 
@@ -91,13 +91,6 @@ export default function Login({ onAuthenticated, onBackHome, initialMode = 'logi
               </button>
             </div>
           </label>
-
-          {mode === 'register' && (
-            <label>
-              NWSDB Account Number
-              <input type="text" value={form.accountNumber} onChange={update('accountNumber')} placeholder="e.g. NWSDB-0001" required />
-            </label>
-          )}
 
           {error && (
             <div className="error-banner" role="alert">
