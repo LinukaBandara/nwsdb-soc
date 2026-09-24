@@ -10,7 +10,9 @@ public class UserAccount
     public string? AccountNumber { get; set; }
 }
 
-public record RegisterRequest(string FullName, string Email, string Password, string AccountNumber);
+public record RegisterRequest(string FullName, string Email, string Password);
+
+public record LinkAccountRequest(string AccountNumber);
 
 public record LoginRequest(string? Email, string? Password);
 
