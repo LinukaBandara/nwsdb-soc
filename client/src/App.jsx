@@ -18,6 +18,9 @@ export default function App() {
   const [authView, setAuthView] = useState('public');
   const [refreshKey, setRefreshKey] = useState(0);
   const [copied, setCopied] = useState(false);
+  const [accountInput, setAccountInput] = useState('');
+  const [accountError, setAccountError] = useState('');
+  const [linkingAccount, setLinkingAccount] = useState(false);
 
   useEffect(() => {
     if (!localStorage.getItem('nwsdb_token')) {
@@ -100,7 +103,90 @@ export default function App() {
     return <OperationsDashboard user={user} onLogout={logout} />;
   }
 
-  const accountNumber = user.accountNumber || 'NWSDB-0001';
+  const accountNumber = user.accountNumber;
+
+  const linkAccount = async (event) => {
+    event.preventDefault();
+    setAccountError('');
+
+    if (!accountInput.trim()) {
+      setAccountError('Please enter your NWSDB account number.');
+      return;
+    }
+
+    setLinkingAccount(true);
+    try {
+      const response = await AuthApi.linkAccount(accountInput.trim());
+      const next = {
+        userId: response.userId,
+        fullName: response.fullName,
+        email: response.email,
+        role: response.role,
+        accountNumber: response.accountNumber
+      };
+      localStorage.setItem('nwsdb_token', response.token);
+      localStorage.setItem('nwsdb_user', JSON.stringify(next));
+      setUser(next);
+      setAccountInput('');
+    } catch (err) {
+      setAccountError(err.message || 'Unable to link the NWSDB account.');
+    } finally {
+      setLinkingAccount(false);
+    }
+  };
+
+  if (user.role === 'Customer' && !user.accountNumber) {
+    return (
+      <main className="auth-page">
+        <section className="auth-card" aria-labelledby="link-account-title">
+          <div className="auth-brand">
+            <div className="brand-mark" aria-hidden="true">
+              <svg viewBox="0 0 24 24" role="img" aria-label="NWSDB Water Crest">
+                <path d="M12 2.8C12 2.8 5.5 10.1 5.5 14.6a6.5 6.5 0 0 0 13 0C18.5 10.1 12 2.8 12 2.8Z" />
+                <path className="brand-wave" d="M8.7 15.2c1.1 1.1 2.3 1.6 3.6 1.6 1.3 0 2.5-.5 3.6-1.6" />
+              </svg>
+            </div>
+            <div>
+              <strong>National Water Supply & Drainage Board</strong>
+            </div>
+          </div>
+
+          <div className="auth-heading">
+            <h1 id="link-account-title">Link your NWSDB account</h1>
+            <p>Registration is complete. Link your existing water supply account to access usage and payment services.</p>
+          </div>
+
+          <form onSubmit={linkAccount}>
+            <label>
+              NWSDB Account Number
+              <input
+                type="text"
+                value={accountInput}
+                onChange={(event) => setAccountInput(event.target.value)}
+                placeholder="e.g. NWSDB-0001"
+                autoComplete="off"
+                required
+              />
+            </label>
+
+            {accountError && (
+              <div className="error-banner" role="alert">
+                <span>{accountError}</span>
+              </div>
+            )}
+
+            <button type="submit" disabled={linkingAccount}>
+              {linkingAccount ? 'Linking account…' : 'Link NWSDB Account'}
+            </button>
+          </form>
+
+          <button type="button" className="link-button" onClick={logout} style={{ marginTop: '14px' }}>
+            Sign out
+          </button>
+        </section>
+      </main>
+    );
+  }
 
   return (
     <main className="app">
