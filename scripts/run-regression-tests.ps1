@@ -188,14 +188,33 @@ if ($paymentId) {
 }
 
 # 20: invalid PayHere notification must be rejected cleanly.
-Test-Api "TC20 PayHere invalid notification" POST "$payment/api/v1/payments/payhere/notify" @{
-    merchant_id = "INVALID"
-    order_id = "REGRESSION"
-    payhere_amount = "1500.00"
-    payhere_currency = "LKR"
-    status_code = "2"
-    md5sig = "INVALID"
-} -expected @(400)
+# PayHere sends application/x-www-form-urlencoded notifications, not JSON.
+try {
+    $form = @{
+        merchant_id = "INVALID"
+        order_id = "REGRESSION"
+        payhere_amount = "1500.00"
+        payhere_currency = "LKR"
+        status_code = "2"
+        md5sig = "INVALID"
+    }
+
+    $r = Invoke-WebRequest -Method POST -Uri "$payment/api/v1/payments/payhere/notify" `
+        -Body $form -ContentType "application/x-www-form-urlencoded" -UseBasicParsing
+
+    $code = [int]$r.StatusCode
+} catch {
+    $code = 0
+    if ($_.Exception.Response) {
+        try { $code = [int]$_.Exception.Response.StatusCode } catch {}
+    }
+}
+
+$script:results += [pscustomobject]@{
+    Test = "TC20 PayHere invalid notification"
+    Result = if ($code -eq 400) { "PASS" } else { "FAIL" }
+    HTTP = $code
+}
 
 Write-Host ""
 $results | Format-Table -AutoSize
