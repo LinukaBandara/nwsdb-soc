@@ -56,7 +56,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 builder.Services.AddAuthorization();
 
 builder.Services.AddDbContext<PaymentDbContext>(options =>
-    options.UseInMemoryDatabase("PaymentServiceDb"));
+    options.UseSqlServer(builder.Configuration.GetConnectionString("PaymentDatabase")));
 
 builder.Services.AddScoped<IPaymentService, NWSDB.PaymentService.Services.PaymentService>();
 
