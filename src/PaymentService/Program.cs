@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using NWSDB.PaymentService.Data;
 using NWSDB.PaymentService.Models;
 using NWSDB.PaymentService.Services;
 
