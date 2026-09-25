@@ -1,3 +1,4 @@
+using NWSDB.UsageService.DTOs;
 using NWSDB.UsageService.Models;
 
 namespace NWSDB.UsageService.Services;
