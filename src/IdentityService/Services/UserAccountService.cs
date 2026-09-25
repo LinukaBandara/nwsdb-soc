@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using NWSDB.IdentityService.Data;
+using NWSDB.IdentityService.DTOs;
 using NWSDB.IdentityService.Models;
 
 namespace NWSDB.IdentityService.Services;
