@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using NWSDB.PaymentService.DTOs;
 using NWSDB.PaymentService.Models;
 
 namespace NWSDB.PaymentService.Services;
