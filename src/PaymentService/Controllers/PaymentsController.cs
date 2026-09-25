@@ -4,6 +4,7 @@ using System.Security.Cryptography;
 using System.Text;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using NWSDB.PaymentService.DTOs;
 using NWSDB.PaymentService.Models;
 using NWSDB.PaymentService.Services;
 
@@ -262,8 +263,3 @@ public class PaymentsController : ControllerBase
                string.Equals(tokenAccount, accountNumber.Trim(), StringComparison.OrdinalIgnoreCase);
     }
 }
-
-public record UpdatePaymentStatusRequest(string Status);
-
-public record PayHereCheckoutRequest(string AccountNumber, decimal Amount);
-public record PayHereCheckoutResponse(string ActionUrl, Dictionary<string, string> Fields);
