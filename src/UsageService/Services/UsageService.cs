@@ -1,4 +1,6 @@
 using Microsoft.EntityFrameworkCore;
+using NWSDB.UsageService.Data;
+using NWSDB.UsageService.DTOs;
 using NWSDB.UsageService.Models;
 
 namespace NWSDB.UsageService.Services;
@@ -75,10 +77,7 @@ public class UsageService : IUsageService
             .ToListAsync();
     }
 
-    /// <summary>
-    /// Calculates an estimated bill using a simplified tiered tariff
-    /// for demonstration and testing purposes.
-    /// </summary>
+
     public static decimal CalculateBill(double unitsConsumed)
     {
         if (unitsConsumed <= 0) return 0m;
