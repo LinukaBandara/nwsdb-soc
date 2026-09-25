@@ -1,12 +1,8 @@
+using NWSDB.PaymentService.DTOs;
 using NWSDB.PaymentService.Models;
 
 namespace NWSDB.PaymentService.Services;
 
-/// <summary>
-/// Defines the operations provided by the payment service.
-/// The interface keeps business logic separate from the HTTP controller,
-/// making the service easier to test and maintain.
-/// </summary>
 public interface IPaymentService
 {
     Task<Payment> CreatePaymentAsync(CreatePaymentRequest request);
