@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using NWSDB.UsageService.DTOs;
 using NWSDB.UsageService.Models;
 using NWSDB.UsageService.Services;
 
